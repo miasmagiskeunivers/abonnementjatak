@@ -35,9 +35,6 @@ TAL = {1: "én", 2: "to", 3: "tre", 4: "fire", 5: "fem", 6: "seks",
 ORDENSTAL = {1: "første", 2: "anden", 3: "tredje", 4: "fjerde", 5: "femte",
              6: "sjette", 7: "syvende", 8: "ottende"}
 
-# De to måder, listen kan sorteres på. Den første er standard.
-SORTERINGER = [("otte", "Pris for 8 uger"), ("uge", "Normalpris pr. uge")]
-
 
 # Små hjælpere
 
@@ -47,7 +44,7 @@ def e(tekst):
 
 def dansk_dato(iso):
     d = date.fromisoformat(iso)
-    return f"{d.day}.\u00a0{MAANEDER[d.month - 1]} {d.year}"
+    return f"{d.day}. {MAANEDER[d.month - 1]} {d.year}"
 
 
 def hele_kroner(beloeb):
@@ -97,12 +94,12 @@ def jsonld_tag(data):
 
 # Udregningen
 
-def beregn(u, plan, uger):
+def beregn(u, plan):
     """Regner prisen ud for én udbyder og én kassestørrelse.
 
-    status er "sikker", når alle tal er kendt, "hoejst", når en del af rabatten er
-    ukendt, så de viste tal er det højeste, det kan blive, og "ukendt", når vi ikke
-    kender kassens pris.
+    status er "kendt", når vi kender kassens pris, og "ukendt", når vi ikke gør.
+    foerste er None, når vi ikke kender rabatten på første levering. hoejst er True,
+    når prisen på første levering er det højeste, den kan blive.
     """
     p = u["priser"].get(plan["id"]) or {}
     b = {"kontrolleret": p.get("kontrolleret"), "kilde": p.get("kilde"), "hoejst": False}
@@ -112,40 +109,30 @@ def beregn(u, plan, uger):
         return b
     fragt = u["fragt"]
     uge = kasse + fragt
-    b.update(kasse=kasse, fragt=fragt, uge=uge,
+    b.update(status="kendt", kasse=kasse, fragt=fragt, uge=uge,
              pr_portion=uge / (plan["personer"] * plan["retter"]))
     intro = u.get("intro")
     if not intro:
-        b.update(status="sikker", foerste=uge, otte=uge * uger)
+        b["foerste"] = uge
     elif intro["type"] == "procent_pr_levering":
         # Uden at vide om rabatten også gælder leveringen, trækker vi den kun fra kassen.
-        # Så er tallene det højeste, det kan blive.
-        med_fragt = intro.get("rabat_paa_fragt") is True
-        leveringer = []
-        for i in range(uger):
-            procent = intro["procenter"][i] if i < len(intro["procenter"]) else 0
-            grundlag = uge if med_fragt else kasse
-            leveringer.append(uge - grundlag * procent / 100)
-        ukendt_fragt = intro.get("rabat_paa_fragt") is None
-        b.update(status="hoejst" if ukendt_fragt else "sikker", hoejst=ukendt_fragt,
-                 foerste=leveringer[0], otte=sum(leveringer))
+        # Så er prisen det højeste, den kan blive.
+        grundlag = uge if intro.get("rabat_paa_fragt") is True else kasse
+        b["foerste"] = uge - grundlag * intro["procenter"][0] / 100
+        b["hoejst"] = intro.get("rabat_paa_fragt") is None
     elif intro["type"] == "op_til_kr":
         # Vi kender kun den samlede rabat, ikke hvordan den fordeles på kasserne.
-        b.update(status="hoejst", hoejst=True, foerste=None, otte=uge * uger)
+        b["foerste"] = None
     else:
         raise ValueError(f"Ukendt type introtilbud hos {u['id']}: {intro['type']}")
     return b
 
 
-def sorteringsnoegle(u, b, felt):
+def sorteringsnoegle(u, b):
+    """Billigste normalpris først. Udbydere uden kendt pris står nederst."""
     if b["status"] == "ukendt":
         return (1, 0, u["navn"].lower())
-    return (0, b["otte"] if felt == "otte" else b["uge"], u["navn"].lower())
-
-
-def sorteret(udbydere, beregninger, plan, felt):
-    return sorted(udbydere,
-                  key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]], felt))
+    return (0, b["uge"], u["navn"].lower())
 
 
 # Tekster om tilbud
@@ -184,8 +171,7 @@ def forbehold(intro):
         return ""
     if intro["type"] == "op_til_kr":
         return ("Vi kunne ikke se, hvor stor rabatten er på hver kasse, uden at oprette en konto. "
-                "Derfor kender vi ikke prisen på første levering, og de første 8 uger kan blive "
-                "billigere end vist.")
+                "Derfor kender vi ikke prisen på første levering.")
     if intro["type"] == "procent_pr_levering" and intro.get("rabat_paa_fragt") is None:
         return "Vi ved ikke, om rabatten også gælder leveringen, så vi har kun trukket den fra kassens pris."
     return ""
@@ -289,7 +275,7 @@ def kontrol_html(b):
     return f'<p class="kontrol">Prisen er kontrolleret {dansk_dato(b["kontrolleret"])}.</p>'
 
 
-def udbyder_html(u, b, plan, felt, uger):
+def udbyder_html(u, b, plan):
     intro = u.get("intro")
     levering = f"levering koster {kr(u['fragt'])}" if u["fragt"] else "levering er gratis"
     if b["status"] == "ukendt":
@@ -298,18 +284,17 @@ def udbyder_html(u, b, plan, felt, uger):
         pris = f'<p class="ukendt">{e(tekst)}</p>'
         kontrol = ""
     else:
+        # Listen er sorteret efter normalprisen, så den kolonne er farvet.
         celler = [
-            ("foerste", "Første levering", beloeb_html(b["foerste"], b["hoejst"])),
-            ("uge", "Normalpris pr. uge", beloeb_html(b["uge"])),
-            ("otte", f"{uger} uger i alt", beloeb_html(b["otte"], b["hoejst"])),
+            ("Første levering", beloeb_html(b["foerste"], b["hoejst"]), ""),
+            ("Normalpris pr. uge", beloeb_html(b["uge"]), ' class="valgt"'),
+            ("Pr. portion", beloeb_html(b["pr_portion"]), ""),
         ]
-        celle_html = "\n".join(
-            f'<div{" class=\"valgt\"" if noegle == felt else ""}><dt>{e(navn)}</dt><dd>{vaerdi}</dd></div>'
-            for noegle, navn, vaerdi in celler)
-        saetninger = [punktum(f"Kassen koster {kr(b['kasse'])}, og {levering}"),
-                      f"Det giver {kr(b['pr_portion'])} pr. portion."]
+        celle_html = "\n".join(f"<div{klasse}><dt>{e(navn)}</dt><dd>{vaerdi}</dd></div>"
+                               for navn, vaerdi, klasse in celler)
+        saetninger = [punktum(f"Kassen koster {kr(b['kasse'])}, og {levering}")]
         if not intro:
-            saetninger.append(f"Der er ikke noget introtilbud, så alle {TAL.get(uger, uger)} uger koster det samme.")
+            saetninger.append("Der er ikke noget introtilbud, så første levering koster det samme som de næste.")
         pris = (f'<dl class="priser">\n{celle_html}\n</dl>\n'
                 f'<p class="regnestykke">{e(" ".join(saetninger))}</p>')
         kontrol = kontrol_html(b)
@@ -364,7 +349,6 @@ def tilbud_html(udbydere, overskrift="h2"):
 def kategoriside(data, beregninger, opdateret):
     kat = data["kategori"]
     planer = kat["planer"]
-    uger = kat["uger"]
     udbydere = data["udbydere"]
     dato = dansk_dato(opdateret)
 
@@ -372,26 +356,15 @@ def kategoriside(data, beregninger, opdateret):
         f'<input type="radio" name="plan" id="plan-{p["id"]}" value="{p["id"]}"'
         f'{" checked" if i == 0 else ""}><label for="plan-{p["id"]}">{p["personer"]} personer</label>'
         for i, p in enumerate(planer))
-    sort_valg = "\n".join(
-        f'<input type="radio" name="sortering" id="sort-{s}" value="{s}"'
-        f'{" checked" if i == 0 else ""}><label for="sort-{s}">{e(navn)}</label>'
-        for i, (s, navn) in enumerate(SORTERINGER))
     retter = sorted({p["retter"] for p in planer})
-    retter_tekst = f"{retter[0]} retter om ugen" if len(retter) == 1 else "et fast antal retter om ugen"
+    retter_tekst = f"{retter[0]} retter om ugen" if len(retter) == 1 else "et fast antal retter om ugen"
 
     lister = []
-    for i, plan in enumerate(planer):
-        for j, (felt, _) in enumerate(SORTERINGER):
-            raekke = sorted(udbydere, key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]], felt))
-            if felt == "otte":
-                status = f"{plan_tekst(plan)}. Billigst de første {uger}\u00a0uger står øverst."
-                if any(beregninger[u["id"]][plan["id"]]["status"] == "hoejst" for u in udbydere):
-                    status += " Kender vi ikke hele rabatten, sorterer vi efter den højeste pris, det kan blive."
-            else:
-                status = f"{plan_tekst(plan)}. Lavest normalpris står øverst."
-            punkter = "\n".join(udbyder_html(u, beregninger[u["id"]][plan["id"]], plan, felt, uger)
-                                for u in raekke)
-            lister.append(f"""<div class="liste" data-vis="{plan["id"]}-{felt}">
+    for plan in planer:
+        raekke = sorted(udbydere, key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]]))
+        status = f"{plan_tekst(plan)}. Lavest normalpris står øverst."
+        punkter = "\n".join(udbyder_html(u, beregninger[u["id"]][plan["id"]], plan) for u in raekke)
+        lister.append(f"""<div class="liste" data-vis="{plan["id"]}">
 <p class="liste-status">{e(status)}</p>
 <ol class="udbydere">
 {punkter}
@@ -399,8 +372,7 @@ def kategoriside(data, beregninger, opdateret):
 </div>""")
 
     vis_regler = ",\n".join(
-        f'.sammenligning:has(#plan-{p["id"]}:checked):has(#sort-{s}:checked) [data-vis="{p["id"]}-{s}"]'
-        for p in planer for s, _ in SORTERINGER)
+        f'.sammenligning:has(#plan-{p["id"]}:checked) [data-vis="{p["id"]}"]' for p in planer)
     stil = f"@supports selector(:has(a)) {{\n{vis_regler} {{\n  display: block;\n}}\n}}"
 
     faerdig = ""
@@ -438,19 +410,13 @@ def kategoriside(data, beregninger, opdateret):
 <section class="intro">
 <div class="ramme">
 <h1>Vegetariske måltidskasser</h1>
-<p class="lead">Her er måltidskasserne, hvor hele kassen kan være uden kød og fisk. Vælg, hvor mange I er, så viser vi prisen på første levering, normalprisen og hvad de første {uger} uger koster.</p>
-<p class="dato">Vi regner med {retter_tekst}. Priserne er kontrolleret {dato}.</p>
+<p class="lead">Her er måltidskasserne, hvor hele kassen kan være uden kød og fisk. Vælg, hvor mange I er, så viser vi prisen på første levering, normalprisen pr. uge og prisen pr. portion.</p>
+<p class="dato">Alle priser er med levering og {retter_tekst}. De er kontrolleret {dato}.</p>
 <div class="valg">
 <fieldset class="segment">
 <legend>Hvor mange er I?</legend>
 <div class="segment-valg">
 {plan_valg}
-</div>
-</fieldset>
-<fieldset class="segment">
-<legend>Sortér efter</legend>
-<div class="segment-valg">
-{sort_valg}
 </div>
 </fieldset>
 </div>
@@ -465,10 +431,9 @@ def kategoriside(data, beregninger, opdateret):
 {ikke_med}
 <h2 id="metode">Sådan regner vi</h2>
 <div class="tekst">
-<p>Normalprisen pr. uge er kassen plus levering, uden tilvalg. Vi regner med {retter_tekst}.</p>
-<p>Prisen for de første {uger} uger er {TAL.get(uger, uger)} leveringer i træk, hvor introtilbuddet er trukket fra. Den viser, hvad kassen koster, også efter at tilbuddet er brugt op.</p>
-<p>Kender vi ikke hele rabatten, skriver vi højst foran beløbet og sorterer efter det. Kan vi slet ikke se en pris, står udbyderen nederst.</p>
-<p>Rækkefølgen afgøres kun af den pris, du sorterer efter. Om en udbyder betaler os for et link, ændrer ikke rækkefølgen.</p>
+<p>Normalprisen pr. uge er kassen plus levering, uden tilvalg. Prisen pr. portion er normalprisen delt med antallet af portioner.</p>
+<p>Første levering er normalprisen med introtilbuddet trukket fra. Kan vi ikke se rabatten på den første kasse, står der ukendt.</p>
+<p>Listen er sorteret efter normalprisen, fordi det er den, du betaler, når tilbuddet er brugt. Kan vi slet ikke se en pris, står udbyderen nederst. Om en udbyder betaler os for et link, ændrer ikke rækkefølgen.</p>
 <p>Beløbene er afrundet til hele kroner. Vi har ikke smagt maden, så vi siger ikke noget om, hvordan den smager. Tjek altid prisen hos udbyderen, før du bestiller, for den kan have ændret sig.</p>
 </div>
 <h2 id="data">Hent tallene</h2>
@@ -492,7 +457,7 @@ def kategoriside(data, beregninger, opdateret):
              "itemListElement": [{"@type": "ListItem", "position": i, "name": f'{u["navn"]}, {u["loesning"]}',
                                   "url": u["link"]} for i, u in enumerate(alfabetisk, start=1)]},
             {"@type": "Dataset", "name": "Priser på vegetariske måltidskasser i Danmark",
-             "description": f"Pris på første levering, normalpris pr. uge og samlet pris for de første {uger} uger "
+             "description": "Pris på første levering, normalpris pr. uge og pris pr. portion med levering "
                             "for vegetariske måltidskasser til 2 og 4 personer, aflæst hos udbyderne.",
              "url": url, "inLanguage": "da", "dateModified": opdateret,
              "creator": {"@type": "Organization", "name": UDGIVER},
@@ -505,18 +470,17 @@ def kategoriside(data, beregninger, opdateret):
     }
     navne = oprems(u["navn"] for u in alfabetisk)
     return side(sti=KATEGORI_STI,
-                titel=f"Vegetariske måltidskasser: hvad koster de første {uger} uger? | {SITE_NAVN}",
+                titel=f"Vegetariske måltidskasser til 2 og 4 personer | {SITE_NAVN}",
                 beskrivelse=f"Sammenlign vegetariske måltidskasser fra {navne}. Se prisen på første levering, "
-                            f"normalprisen og de første {uger} uger for 2 og 4 personer. Kontrolleret {dato}.",
+                            f"normalprisen pr. uge og prisen pr. portion for 2 og 4 personer. Kontrolleret {dato}.",
                 indhold=indhold, jsonld=jsonld, aktiv=KATEGORI_STI, stil=stil)
 
 
 def forside(data, beregninger, opdateret):
     kat = data["kategori"]
     plan = kat["planer"][0]
-    uger = kat["uger"]
     udbydere = data["udbydere"]
-    raekke = sorted(udbydere, key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]], "otte"))
+    raekke = sorted(udbydere, key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]]))
     menu = []
     ukendte = []
     for u in raekke:
@@ -524,20 +488,19 @@ def forside(data, beregninger, opdateret):
         if b["status"] == "ukendt":
             ukendte.append(u["navn"])
             continue
-        foran = '<span class="forbehold-lille">højst</span> ' if b["hoejst"] else ""
         menu.append(f'<li><span class="navn">{e(u["navn"])}</span><span class="prikker" aria-hidden="true"></span>'
-                    f'<span class="pris">{foran}{kr(b["otte"])}</span></li>')
+                    f'<span class="pris">{kr(b["pr_portion"])}</span></li>')
     note = f"Priserne er kontrolleret {dansk_dato(opdateret)}."
     if ukendte:
         note = f"Vi kunne ikke se prisen hos {oprems(ukendte)}. " + note
     indhold = f"""<section class="intro forside-intro">
 <div class="ramme">
 <h1>Abonnementer på det, du bruger igen og igen</h1>
-<p class="lead">Vi sammenligner abonnementer på ting, der kommer af sig selv, og regner ud, hvad de koster de første {TAL.get(uger, uger)} uger. Vi er startet med vegetariske måltidskasser.</p>
+<p class="lead">Vi sammenligner abonnementer på ting, der kommer af sig selv, og viser, hvad de koster med levering. Vi er startet med vegetariske måltidskasser.</p>
 <p><a class="knap" href="{KATEGORI_STI}">Se de vegetariske måltidskasser</a></p>
 <section class="smagsproeve" aria-labelledby="eksempel">
 <h2 id="eksempel">Vegetarisk måltidskasse til {plan["personer"]} personer</h2>
-<p class="smagsproeve-under">De første {uger} uger med {plan["retter"]} retter om ugen, levering og introtilbud.</p>
+<p class="smagsproeve-under">Pris pr. portion med levering, når I får {plan["retter"]} retter om ugen.</p>
 <ol class="menukort">
 {chr(10).join(menu)}
 </ol>
@@ -550,8 +513,8 @@ def forside(data, beregninger, opdateret):
 <h2 id="saadan">Sådan regner vi</h2>
 <div class="principper">
 <div>
-<h3>Vi regner otte uger frem</h3>
-<p>Et introtilbud gør den første kasse billig. Derfor viser vi også, hvad de første otte uger koster, så du kan se prisen, når tilbuddet er brugt.</p>
+<h3>Vi regner levering med</h3>
+<p>Prisen pr. uge og pr. portion er med levering, så du kan sammenligne kasserne direkte.</p>
 </div>
 <div>
 <h3>Vi skriver kun priser, vi selv har set</h3>
@@ -575,7 +538,7 @@ def forside(data, beregninger, opdateret):
     }
     return side(sti="", titel=f"{SITE_NAVN} | Abonnementer på det, du bruger igen og igen",
                 beskrivelse="Vi sammenligner abonnementer på måltidskasser og andet, der kommer af sig selv, "
-                            "og regner ud, hvad de koster de første otte uger.",
+                            "og viser, hvad de koster med levering.",
                 indhold=indhold, jsonld=jsonld)
 
 
@@ -624,16 +587,15 @@ def side404():
 def datafiler(data, beregninger, opdateret):
     kat = data["kategori"]
     kolonner = ["id", "udbyder", "loesning", "personer", "retter_om_ugen", "kassepris_kr", "levering_kr",
-                "normalpris_pr_uge_kr", "pr_portion_kr", "foerste_levering_kr", f"{kat['uger']}_uger_kr",
+                "normalpris_pr_uge_kr", "pr_portion_kr", "foerste_levering_kr", "foerste_levering_er_hoejst",
                 "status", "introtilbud", "kontrolleret", "kilde", "link"]
     raekker = []
     for u in sorted(data["udbydere"], key=lambda u: u["navn"].lower()):
         for plan in kat["planer"]:
             b = beregninger[u["id"]][plan["id"]]
-            ukendt = b["status"] == "ukendt"
 
-            def tal(navn, b=b, ukendt=ukendt):
-                v = None if ukendt else b.get(navn)
+            def tal(navn, b=b):
+                v = b.get(navn)
                 return "" if v is None else hele_kroner(v)
 
             raekker.append({
@@ -641,9 +603,10 @@ def datafiler(data, beregninger, opdateret):
                 "personer": plan["personer"], "retter_om_ugen": plan["retter"],
                 "kassepris_kr": tal("kasse"), "levering_kr": u["fragt"],
                 "normalpris_pr_uge_kr": tal("uge"), "pr_portion_kr": tal("pr_portion"),
-                "foerste_levering_kr": tal("foerste"), f"{kat['uger']}_uger_kr": tal("otte"),
-                "status": {"sikker": "sikker", "hoejst": "højst", "ukendt": "ukendt"}[b["status"]],
-                "introtilbud": tilbud_kort(u["intro"]).replace("\u00a0", " ") if u.get("intro") else "",
+                "foerste_levering_kr": tal("foerste"),
+                "foerste_levering_er_hoejst": "ja" if b["hoejst"] else "",
+                "status": b["status"],
+                "introtilbud": tilbud_kort(u["intro"]).replace(" ", " ") if u.get("intro") else "",
                 "kontrolleret": b.get("kontrolleret") or "", "kilde": b.get("kilde") or "",
                 "link": u["link"],
             })
@@ -658,9 +621,10 @@ def datafiler(data, beregninger, opdateret):
         "opdateret": opdateret,
         "forklaring": {
             "normalpris_pr_uge_kr": "Kassen plus levering, uden tilvalg.",
-            f"{kat['uger']}_uger_kr": f"{kat['uger']} leveringer i træk med introtilbuddet trukket fra.",
-            "status": "sikker: alle tal er kendt. højst: en del af rabatten er ukendt, så tallet er det "
-                      "højeste, det kan blive. ukendt: vi kunne ikke se prisen.",
+            "pr_portion_kr": "Normalprisen pr. uge delt med antallet af portioner.",
+            "foerste_levering_kr": "Normalprisen med introtilbuddet trukket fra. Tom, hvis rabatten "
+                                   "på første kasse ikke kunne ses.",
+            "status": "kendt: kassens pris kunne ses. ukendt: vi kunne ikke se prisen.",
         },
         "priser": raekker,
     }
@@ -674,11 +638,10 @@ def maskinfiler(data, opdateret):
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           f"{sitemap}\n</urlset>\n")
     skriv("robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}sitemap.xml\n")
-    uger = data["kategori"]["uger"]
     navne = oprems(sorted(u["navn"] for u in data["udbydere"]))
     skriv("llms.txt", f"""# {SITE_NAVN}
 
-> Dansk oversigt over abonnementer på det, man bruger igen og igen. Første kategori er vegetariske måltidskasser fra {navne}. For 2 og 4 personer med 3 retter om ugen viser sitet prisen på første levering, normalprisen pr. uge og den samlede pris for de første {uger} uger med levering og introtilbud. Priserne er aflæst hos udbyderne, senest {dansk_dato(opdateret)}. Hvor en pris ikke kunne ses, står der det.
+> Dansk oversigt over abonnementer på det, man bruger igen og igen. Første kategori er vegetariske måltidskasser fra {navne}. For 2 og 4 personer med 3 retter om ugen viser sitet prisen på første levering, normalprisen pr. uge og prisen pr. portion, alle med levering. Priserne er aflæst hos udbyderne, senest {dansk_dato(opdateret)}. Hvor en pris ikke kunne ses, står der det.
 
 ## Sider
 
@@ -697,8 +660,7 @@ def main():
     with open(DATA / "maaltidskasser.json", encoding="utf-8") as fh:
         data = json.load(fh)
     kat = data["kategori"]
-    beregninger = {u["id"]: {p["id"]: beregn(u, p, kat["uger"]) for p in kat["planer"]}
-                   for u in data["udbydere"]}
+    beregninger = {u["id"]: {p["id"]: beregn(u, p) for p in kat["planer"]} for u in data["udbydere"]}
     datoer = [b["kontrolleret"] for pr in beregninger.values() for b in pr.values() if b.get("kontrolleret")]
     opdateret = max(datoer)
 
@@ -723,9 +685,8 @@ def main():
             if b["status"] == "ukendt":
                 print(f"  {u['navn']} {p['id']}: pris ukendt")
             else:
-                foerste = "ukendt" if b["foerste"] is None else kr(b["foerste"])
+                foerste = "ukendt" if b["foerste"] is None else ("højst " if b["hoejst"] else "") + kr(b["foerste"])
                 print(f"  {u['navn']} {p['id']}: første {foerste}, uge {kr(b['uge'])}, "
-                      f"{kat['uger']} uger {'højst ' if b['hoejst'] else ''}{kr(b['otte'])}, "
                       f"portion {kr(b['pr_portion'])}")
     print(f"Bygget {len(data['udbydere'])} udbydere, opdateret {opdateret}, i {UD}")
 

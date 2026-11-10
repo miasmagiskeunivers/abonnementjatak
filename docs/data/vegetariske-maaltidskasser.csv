@@ -1,7 +1,7 @@
-id;udbyder;loesning;personer;retter_om_ugen;kassepris_kr;levering_kr;normalpris_pr_uge_kr;pr_portion_kr;foerste_levering_kr;8_uger_kr;status;introtilbud;kontrolleret;kilde;link
-aarstiderne;Aarstiderne;VegetarKassen;2;3;429;49;478;80;478;3824;sikker;;2026-11-10;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen
-aarstiderne;Aarstiderne;VegetarKassen;4;3;739;49;788;66;788;6304;sikker;;2026-11-10;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen
-hellofresh;HelloFresh;Madpræferencen Vegetarisk;2;3;480;49;529;88;;4232;højst;Spar op til 959 kr. på de fem første kasser.;2026-11-10;https://www.hellofresh.dk/plans;https://www.hellofresh.dk/
-hellofresh;HelloFresh;Madpræferencen Vegetarisk;4;3;670;49;719;60;;5752;højst;Spar op til 959 kr. på de fem første kasser.;2026-11-10;https://www.hellofresh.dk/plans;https://www.hellofresh.dk/
+id;udbyder;loesning;personer;retter_om_ugen;kassepris_kr;levering_kr;normalpris_pr_uge_kr;pr_portion_kr;foerste_levering_kr;foerste_levering_er_hoejst;status;introtilbud;kontrolleret;kilde;link
+aarstiderne;Aarstiderne;VegetarKassen;2;3;429;49;478;80;478;;kendt;;2026-11-10;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen
+aarstiderne;Aarstiderne;VegetarKassen;4;3;739;49;788;66;788;;kendt;;2026-11-10;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen;https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen
+hellofresh;HelloFresh;Madpræferencen Vegetarisk;2;3;480;49;529;88;;;kendt;Spar op til 959 kr. på de fem første kasser.;2026-11-10;https://www.hellofresh.dk/plans;https://www.hellofresh.dk/
+hellofresh;HelloFresh;Madpræferencen Vegetarisk;4;3;670;49;719;60;;;kendt;Spar op til 959 kr. på de fem første kasser.;2026-11-10;https://www.hellofresh.dk/plans;https://www.hellofresh.dk/
 retnemt;RetNemt;Vegetariske retter efter eget valg;2;3;;49;;;;;ukendt;25 % rabat på første levering, 15 % på anden og 10 % på tredje.;2026-11-10;;https://www.retnemt.dk/maltidskasse/vegetar
 retnemt;RetNemt;Vegetariske retter efter eget valg;4;3;;49;;;;;ukendt;25 % rabat på første levering, 15 % på anden og 10 % på tredje.;2026-11-10;;https://www.retnemt.dk/maltidskasse/vegetar

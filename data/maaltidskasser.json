@@ -2,7 +2,6 @@
   "kategori": {
     "id": "vegetariske-maaltidskasser",
     "navn": "Vegetariske måltidskasser",
-    "uger": 8,
     "planer": [
       {"id": "2x3", "personer": 2, "retter": 3},
       {"id": "4x3", "personer": 4, "retter": 3}

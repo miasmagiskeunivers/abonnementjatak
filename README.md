@@ -13,11 +13,12 @@ Provisioner, netværk og interne noter ligger ikke her, fordi repoet er offentli
 
 ## Sådan regnes priserne
 
-- Normalprisen pr. uge er kassens pris plus levering.
-- Første levering og de første 8 uger får introtilbuddet trukket fra.
+- Normalprisen pr. uge er kassens pris plus levering. Listen sorteres efter den.
+- Prisen pr. portion er normalprisen delt med antallet af portioner.
+- Første levering er normalprisen med introtilbuddet trukket fra.
 - Et introtilbud skrives på en af to måder:
-  - `procent_pr_levering` med en liste af procenter, fx `[25, 15, 10]`. Sæt `rabat_paa_fragt` til `true` eller `false`, når det vides. Står den til `null`, trækkes rabatten kun fra kassen, og tallene vises med højst foran.
-  - `op_til_kr` med `beloeb` og `leveringer`, når udbyderen kun oplyser den samlede rabat. Så står første levering som ukendt, og de 8 uger står med højst foran.
+  - `procent_pr_levering` med en liste af procenter, fx `[25, 15, 10]`. Sæt `rabat_paa_fragt` til `true` eller `false`, når det vides. Står den til `null`, trækkes rabatten kun fra kassen, og første levering vises med højst foran.
+  - `op_til_kr` med `beloeb` og `leveringer`, når udbyderen kun oplyser den samlede rabat. Så står første levering som ukendt.
 - Sæt `kasse` til `null`, hvis prisen ikke kan ses. Udbyderen står så nederst med en forklaring.
 
 ## Byg sitet
