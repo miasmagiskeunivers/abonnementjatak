@@ -1,0 +1,405 @@
+/* Abonnement ja tak
+   Farver: papir, blæk, rødbede, kål og linje. Rødbede bruges kun til mærket, links og knapper.
+   Skrift: rund sans til overskrifter og mærket, bogserif til brødtekst. Ingen webfonte, så ingen kald til tredjepart. */
+
+:root {
+  --papir: #ffffff;
+  --kaal: #eef3ec;
+  --linje: #d3ddd4;
+  --blaek: #1e2a26;
+  --blaek-svag: #4b5b55;
+  --roedbede: #a31a55;
+  --roedbede-moerk: #7d1240;
+  --paa-roedbede: #ffffff;
+  --skrift-rund: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", "Varela Round", system-ui, sans-serif;
+  --skrift-tekst: Charter, "Bitstream Charter", "Iowan Old Style", "Sitka Text", Cambria, Georgia, serif;
+  --tekstbredde: 42rem;
+  --maerkefarve: #a31a55;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --papir: #121815;
+    --kaal: #1a231f;
+    --linje: #2f3b36;
+    --blaek: #e6ede8;
+    --blaek-svag: #a9b7b1;
+    --roedbede: #f27aa9;
+    --roedbede-moerk: #ff9cc1;
+    --paa-roedbede: #121815;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--papir);
+  color: var(--blaek);
+  font-family: var(--skrift-tekst);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: var(--roedbede);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--roedbede-moerk);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--roedbede);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.spring {
+  position: absolute;
+  left: -9999px;
+}
+
+.spring:focus {
+  left: 1rem;
+  top: 1rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: var(--papir);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--skrift-rund);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--blaek);
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2.1rem, 7vw, 3.25rem);
+  font-weight: 800;
+}
+
+h2 {
+  margin: 3.25rem 0 1rem;
+  font-size: clamp(1.45rem, 4vw, 1.9rem);
+  font-weight: 800;
+}
+
+h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+.lead {
+  font-size: 1.25rem;
+  line-height: 1.55;
+}
+
+/* Top og bund */
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  max-width: var(--tekstbredde);
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.maerke {
+  display: block;
+  width: 7rem;
+  color: var(--maerkefarve);
+}
+
+.top nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-left: auto;
+  font-family: var(--skrift-rund);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.top nav a {
+  padding: 0.25rem 0;
+  border-bottom: 2px solid transparent;
+  color: var(--blaek);
+  text-decoration: none;
+}
+
+.top nav a:hover,
+.top nav a[aria-current="page"] {
+  border-bottom-color: var(--roedbede);
+  color: var(--blaek);
+}
+
+main {
+  max-width: var(--tekstbredde);
+  margin: 0 auto;
+  padding: 1rem 1rem 4rem;
+}
+
+.bund {
+  border-top: 1px solid var(--linje);
+  background: var(--kaal);
+}
+
+.bund-indre {
+  max-width: var(--tekstbredde);
+  margin: 0 auto;
+  padding: 2rem 1rem 2.5rem;
+  color: var(--blaek-svag);
+  font-size: 0.95rem;
+}
+
+.bund-indre p:last-child {
+  margin-bottom: 0;
+}
+
+/* Mærket: klistermærket fra postkassen, bare med et ja */
+
+.sticker {
+  width: 100%;
+  height: auto;
+}
+
+.sticker text {
+  font-family: var(--skrift-rund);
+}
+
+.forside-maerke {
+  width: min(21rem, 78vw);
+  margin: 1rem 0 2.25rem -0.25rem;
+  color: var(--maerkefarve);
+  transform: rotate(-4deg);
+  filter: drop-shadow(0 2px 0 rgba(30, 42, 38, 0.12));
+  animation: klistres 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+
+@keyframes klistres {
+  from {
+    opacity: 0;
+    transform: rotate(-13deg) scale(1.1);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-4deg) scale(1);
+  }
+}
+
+/* Knapper */
+
+.knap {
+  display: inline-block;
+  padding: 0.8rem 1.3rem;
+  border-radius: 999px;
+  background: var(--roedbede);
+  color: var(--paa-roedbede);
+  font-family: var(--skrift-rund);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.knap:hover {
+  background: var(--roedbede-moerk);
+  color: var(--paa-roedbede);
+}
+
+.annonce {
+  margin-left: 0.6rem;
+  color: var(--blaek-svag);
+  font-family: var(--skrift-rund);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Forsiden */
+
+.kort {
+  display: block;
+  padding: 1.25rem 1.4rem;
+  border-radius: 1.25rem;
+  background: var(--kaal);
+  color: var(--blaek);
+  text-decoration: none;
+}
+
+.kort:hover {
+  color: var(--blaek);
+  outline: 2px solid var(--roedbede);
+}
+
+.kort-titel {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--roedbede);
+  font-family: var(--skrift-rund);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.kort-tekst {
+  display: block;
+  font-size: 1rem;
+}
+
+.snart {
+  margin-top: 1rem;
+  color: var(--blaek-svag);
+  font-size: 1rem;
+}
+
+.principper h3 {
+  margin-top: 1.75rem;
+}
+
+/* Kategorisiden */
+
+.overblik {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+.overblik caption {
+  margin-bottom: 0.5rem;
+  color: var(--blaek-svag);
+  font-size: 0.95rem;
+  text-align: left;
+}
+
+.overblik th,
+.overblik td {
+  padding: 0.65rem 0.75rem 0.65rem 0;
+  border-bottom: 1px solid var(--linje);
+  text-align: left;
+  vertical-align: top;
+}
+
+.overblik thead th {
+  border-bottom: 2px solid var(--blaek);
+  font-family: var(--skrift-rund);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.overblik tbody th {
+  font-family: var(--skrift-rund);
+  font-weight: 700;
+}
+
+.udbyder {
+  padding: 1.75rem 0 1.25rem;
+  border-top: 1px solid var(--linje);
+  scroll-margin-top: 1rem;
+}
+
+.loesning {
+  margin-bottom: 0.75rem;
+  color: var(--roedbede);
+  font-family: var(--skrift-rund);
+  font-weight: 700;
+}
+
+.fakta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem 1.75rem;
+  margin: 1.25rem 0 1.5rem;
+}
+
+@media (min-width: 40rem) {
+  .fakta {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.fakta dt {
+  color: var(--blaek-svag);
+  font-family: var(--skrift-rund);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.fakta dd {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.fakta .note {
+  display: block;
+  color: var(--blaek-svag);
+  font-size: 0.95rem;
+}
+
+.ikke-med {
+  padding-left: 1.2rem;
+}
+
+.ikke-med li {
+  margin-bottom: 0.5rem;
+}
+
+.log {
+  padding: 0;
+  list-style: none;
+}
+
+.log li {
+  margin-bottom: 0.5rem;
+}
+
+.log time {
+  font-family: var(--skrift-rund);
+  font-weight: 700;
+}
+
+@media (max-width: 30rem) {
+  .maerke {
+    width: 5.75rem;
+  }
+
+  .top nav {
+    font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

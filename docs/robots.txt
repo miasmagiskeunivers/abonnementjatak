@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://abonnementjatak.dk/sitemap.xml

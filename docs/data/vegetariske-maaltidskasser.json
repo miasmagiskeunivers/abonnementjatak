@@ -1,0 +1,71 @@
+{
+  "navn": "Vegetariske måltidskasser i Danmark",
+  "kilde": "https://abonnementjatak.dk/vegetariske-maaltidskasser/",
+  "opdateret": "2026-11-10",
+  "udbydere": [
+    {
+      "id": "aarstiderne",
+      "type": "måltidskasse",
+      "udbyder": "Aarstiderne",
+      "loesning": "VegetarKassen",
+      "beskrivelse": "Aarstiderne har en særskilt kasse med vegetariske retter. Alle råvarer er økologiske, og med medlemskabet Aarstiderne Plus ligger priserne omkring 10 % lavere.",
+      "pris": "Fra 56 kr. pr. kuvert",
+      "pris_note": "Medlemmer af Aarstiderne Plus betaler omkring 10 % mindre.",
+      "intro": "Intet generelt introtilbud på forsiden.",
+      "binding_kort": "Ingen for kassen",
+      "binding": "Der er ikke oplyst nogen binding på selve kassen. Medlemskabet Aarstiderne Plus kan tidligst opsiges efter 6 måneder med 30 dages varsel.",
+      "oekologi": "Økologisk",
+      "levering": "Se leveringsmulighederne for dit postnummer hos Aarstiderne.",
+      "link": "https://www.aarstiderne.com/",
+      "aflaest": "2026-11-10"
+    },
+    {
+      "id": "halkaer-aadal",
+      "type": "færdigretter",
+      "udbyder": "Halkær Ådal",
+      "loesning": "Vegetar-kassen",
+      "beskrivelse": "Økologiske færdigretter på frost, der tager 25 til 35 minutter at varme. Vegetar-kassen er deres mest populære kasse.",
+      "pris": "Står ikke på forsiden",
+      "pris_note": "",
+      "intro": "Intet introtilbud på forsiden.",
+      "binding_kort": "Ikke oplyst",
+      "binding": "Halkær Ådal har abonnementer, men vilkårene for Vegetar-kassen står ikke på forsiden.",
+      "oekologi": "Økologisk",
+      "levering": "Hele landet undtagen øer uden bro. Gratis for abonnenter og ved køb over 950 kr., ellers 65 kr.",
+      "link": "https://halkaeraadal.dk/",
+      "aflaest": "2026-11-10"
+    },
+    {
+      "id": "hellofresh",
+      "type": "måltidskasse",
+      "udbyder": "HelloFresh",
+      "loesning": "Madpræferencen Vegetarisk",
+      "beskrivelse": "Du vælger madpræferencen Vegetarisk eller Mest med grønt og plukker selv retterne fra ugens menu, så hele kassen kan være uden kød og fisk.",
+      "pris": "Vises ved bestilling",
+      "pris_note": "Prisen kommer frem, når du har tastet dit postnummer.",
+      "intro": "Spar op til 959 kr. på dine 5 første kasser.",
+      "binding_kort": "Ingen",
+      "binding": "Ingen binding. Du kan sætte leveringen på pause eller opsige abonnementet, men ændringer skal ske ugen før levering.",
+      "oekologi": "Ikke oplyst",
+      "levering": "Hele Danmark inklusive Bornholm, men ikke øer uden bro.",
+      "link": "https://www.hellofresh.dk/",
+      "aflaest": "2026-11-10"
+    },
+    {
+      "id": "retnemt",
+      "type": "måltidskasse",
+      "udbyder": "RetNemt",
+      "loesning": "Vegetariske retter efter eget valg",
+      "beskrivelse": "Du vælger 2 til 5 retter fra den vegetariske menu til 2 til 6 personer og kan ændre antal personer og dage fra uge til uge.",
+      "pris": "Fra 38 kr. pr. portion",
+      "pris_note": "Prisen gælder hele sortimentet, ikke kun de vegetariske retter.",
+      "intro": "25 % rabat på 1. levering, 15 % på 2. og 10 % på 3.",
+      "binding_kort": "Ingen",
+      "binding": "Ingen binding. Du kan springe uger over, holde pause eller opsige, når du vil. Bestil og ret senest onsdag kl. 23.59 for næste uge.",
+      "oekologi": "Ikke oplyst",
+      "levering": "Hele landet undtagen øer uden bro. Bornholm og Ærø er med.",
+      "link": "https://www.retnemt.dk/maltidskasse/vegetar",
+      "aflaest": "2026-11-10"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+# Abonnement ja tak
+
+> Uafhængig dansk oversigt over abonnementer, der gør hverdagen nemmere. Første kategori er vegetariske måltidskasser. Priser og vilkår aflæses hos udbyderne hver måned, senest 10. november 2026.
+
+## Sider
+
+- [Vegetariske måltidskasser](https://abonnementjatak.dk/vegetariske-maaltidskasser/): måltidskasser, hvor hele leverancen kan være uden kød og fisk, med priser, introtilbud, binding og levering
+- [Om sitet](https://abonnementjatak.dk/om/): hvem står bag, og hvordan sitet tjener penge
+
+## Data
+
+- [Vegetariske måltidskasser som CSV](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.csv)
+- [Vegetariske måltidskasser som JSON](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.json)
