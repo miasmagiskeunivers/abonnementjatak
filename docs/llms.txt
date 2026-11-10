@@ -1,13 +1,13 @@
-# Abonnement ja tak
+# Abonnement, ja tak
 
-> Uafhængig dansk oversigt over abonnementer, der gør hverdagen nemmere. Første kategori er vegetariske måltidskasser. Priser og vilkår aflæses hos udbyderne hver måned, senest 10. november 2026.
+> Dansk oversigt over abonnementer på det, man bruger igen og igen. Første kategori er vegetariske måltidskasser fra Aarstiderne, HelloFresh og RetNemt. For 2 og 4 personer med 3 retter om ugen viser sitet prisen på første levering, normalprisen pr. uge og den samlede pris for de første 8 uger med levering og introtilbud. Priserne er aflæst hos udbyderne, senest 10. november 2026. Hvor en pris ikke kunne ses, står der det.
 
 ## Sider
 
-- [Vegetariske måltidskasser](https://abonnementjatak.dk/vegetariske-maaltidskasser/): måltidskasser, hvor hele leverancen kan være uden kød og fisk, med priser, introtilbud, binding og levering
-- [Om sitet](https://abonnementjatak.dk/om/): hvem står bag, og hvordan sitet tjener penge
+- [Vegetariske måltidskasser](https://abonnementjatak.dk/vegetariske-maaltidskasser/): sammenligning af priser, introtilbud, binding og levering
+- [Om sitet](https://abonnementjatak.dk/om/): hvem står bag, hvordan tallene findes, og hvordan sitet tjener penge
 
 ## Data
 
-- [Vegetariske måltidskasser som CSV](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.csv)
-- [Vegetariske måltidskasser som JSON](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.json)
+- [Priser som CSV](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.csv)
+- [Priser som JSON](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.json)

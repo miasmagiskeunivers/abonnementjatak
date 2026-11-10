@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Bygger abonnementjatak.dk som statiske sider i docs/ ud fra filerne i data/.
+"""Bygger abonnementjatak.dk som statiske sider i docs/ ud fra data/maaltidskasser.json.
 
 Kør med:  python3 build.py
-Scriptet bruger kun Pythons standardbibliotek.
+Scriptet bruger kun Pythons standardbibliotek. Alle priser regnes ud her, så tallene på
+siderne og i de filer, man kan hente, altid passer med datafilen.
 """
 
 import csv
@@ -11,7 +12,9 @@ import io
 import json
 import shutil
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROD = Path(__file__).resolve().parent
 DATA = ROD / "data"
@@ -19,7 +22,7 @@ SRC = ROD / "src"
 UD = ROD / "docs"
 
 SITE_URL = "https://abonnementjatak.dk/"
-SITE_NAVN = "Abonnement ja tak"
+SITE_NAVN = "Abonnement, ja tak"
 UDGIVER = "Mias Magiske Univers"
 KONTAKT = "velkommentil@miasmagiskeunivers.dk"
 KATEGORI_STI = "vegetariske-maaltidskasser/"
@@ -29,37 +32,56 @@ MAANEDER = ["januar", "februar", "marts", "april", "maj", "juni", "juli",
             "august", "september", "oktober", "november", "december"]
 TAL = {1: "én", 2: "to", 3: "tre", 4: "fire", 5: "fem", 6: "seks",
        7: "syv", 8: "otte", 9: "ni", 10: "ti"}
+ORDENSTAL = {1: "første", 2: "anden", 3: "tredje", 4: "fjerde", 5: "femte",
+             6: "sjette", 7: "syvende", 8: "ottende"}
 
-# De kolonner, der må stå i de downloadbare filer og på sitet.
-OFFENTLIGE = ["id", "type", "udbyder", "loesning", "beskrivelse", "pris", "pris_note",
-              "intro", "binding_kort", "binding", "oekologi", "levering", "link", "aflaest"]
+# De to måder, listen kan sorteres på. Den første er standard.
+SORTERINGER = [("otte", "Pris for 8 uger"), ("uge", "Normalpris pr. uge")]
 
-STICKER = """<svg class="sticker" viewBox="0 0 240 132" role="img" aria-label="Abonnement ja tak">
-<ellipse cx="120" cy="66" rx="114" ry="60" fill="#fff" stroke="currentColor" stroke-width="7"/>
-<ellipse cx="120" cy="66" rx="102" ry="48" fill="none" stroke="currentColor" stroke-width="1.5"/>
-<text x="120" y="60" text-anchor="middle" font-size="23" font-weight="700" fill="currentColor">Abonnement</text>
-<text x="120" y="96" text-anchor="middle" font-size="42" font-weight="800" fill="currentColor">ja tak</text>
-</svg>"""
 
+# Små hjælpere
 
 def e(tekst):
-    return html.escape(tekst or "", quote=True)
+    return html.escape(str(tekst if tekst is not None else ""), quote=True)
 
 
 def dansk_dato(iso):
     d = date.fromisoformat(iso)
-    return f"{d.day}. {MAANEDER[d.month - 1]} {d.year}"
+    return f"{d.day}.\u00a0{MAANEDER[d.month - 1]} {d.year}"
 
 
-def antal(n, ental, flertal):
-    ord_ = TAL.get(n, str(n))
-    return f"{ord_} {ental if n == 1 else flertal}"
+def hele_kroner(beloeb):
+    return int(Decimal(str(beloeb)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
-def laes(navn):
-    with open(DATA / navn, encoding="utf-8", newline="") as fh:
-        return [{k: (v or "").strip() for k, v in r.items()}
-                for r in csv.DictReader(fh, delimiter=";")]
+def kr_tal(beloeb):
+    return f"{hele_kroner(beloeb):,}".replace(",", ".")
+
+
+def kr(beloeb):
+    # Hårdt mellemrum, så tal og enhed ikke deles over to linjer.
+    return kr_tal(beloeb) + " kr."
+
+
+def punktum(saetning):
+    """Sætter punktum, medmindre sætningen allerede slutter med et (fx 49 kr.)."""
+    return saetning if saetning.endswith(".") else saetning + "."
+
+
+def oprems(navne):
+    navne = list(navne)
+    if len(navne) <= 1:
+        return "".join(navne)
+    return ", ".join(navne[:-1]) + " og " + navne[-1]
+
+
+def domaene(url):
+    vaert = urlparse(url).netloc
+    return vaert[4:] if vaert.startswith("www.") else vaert
+
+
+def plan_tekst(plan):
+    return f"{plan['personer']} personer med {plan['retter']} retter om ugen"
 
 
 def skriv(sti, indhold):
@@ -73,50 +95,155 @@ def jsonld_tag(data):
     return f'<script type="application/ld+json">\n{tekst}\n</script>\n'
 
 
-def side(*, sti, titel, beskrivelse, indhold, jsonld=None, aktiv=None,
-         vis_maerke=True, prefiks=None):
+# Udregningen
+
+def beregn(u, plan, uger):
+    """Regner prisen ud for én udbyder og én kassestørrelse.
+
+    status er "sikker", når alle tal er kendt, "hoejst", når en del af rabatten er
+    ukendt, så de viste tal er det højeste, det kan blive, og "ukendt", når vi ikke
+    kender kassens pris.
+    """
+    p = u["priser"].get(plan["id"]) or {}
+    b = {"kontrolleret": p.get("kontrolleret"), "kilde": p.get("kilde"), "hoejst": False}
+    kasse = p.get("kasse")
+    if kasse is None:
+        b["status"] = "ukendt"
+        return b
+    fragt = u["fragt"]
+    uge = kasse + fragt
+    b.update(kasse=kasse, fragt=fragt, uge=uge,
+             pr_portion=uge / (plan["personer"] * plan["retter"]))
+    intro = u.get("intro")
+    if not intro:
+        b.update(status="sikker", foerste=uge, otte=uge * uger)
+    elif intro["type"] == "procent_pr_levering":
+        # Uden at vide om rabatten også gælder leveringen, trækker vi den kun fra kassen.
+        # Så er tallene det højeste, det kan blive.
+        med_fragt = intro.get("rabat_paa_fragt") is True
+        leveringer = []
+        for i in range(uger):
+            procent = intro["procenter"][i] if i < len(intro["procenter"]) else 0
+            grundlag = uge if med_fragt else kasse
+            leveringer.append(uge - grundlag * procent / 100)
+        ukendt_fragt = intro.get("rabat_paa_fragt") is None
+        b.update(status="hoejst" if ukendt_fragt else "sikker", hoejst=ukendt_fragt,
+                 foerste=leveringer[0], otte=sum(leveringer))
+    elif intro["type"] == "op_til_kr":
+        # Vi kender kun den samlede rabat, ikke hvordan den fordeles på kasserne.
+        b.update(status="hoejst", hoejst=True, foerste=None, otte=uge * uger)
+    else:
+        raise ValueError(f"Ukendt type introtilbud hos {u['id']}: {intro['type']}")
+    return b
+
+
+def sorteringsnoegle(u, b, felt):
+    if b["status"] == "ukendt":
+        return (1, 0, u["navn"].lower())
+    return (0, b["otte"] if felt == "otte" else b["uge"], u["navn"].lower())
+
+
+def sorteret(udbydere, beregninger, plan, felt):
+    return sorted(udbydere,
+                  key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]], felt))
+
+
+# Tekster om tilbud
+
+def procent_raekke(intro):
+    dele = []
+    for i, procent in enumerate(intro["procenter"], start=1):
+        if i == 1:
+            dele.append(f"{procent} % rabat på første levering")
+        else:
+            dele.append(f"{procent} % på {ORDENSTAL[i]}")
+    return oprems(dele)
+
+
+def tilbud_kort(intro):
+    """Tilbuddet med udbyderens egne tal, som en sætning for sig."""
+    if intro["type"] == "op_til_kr":
+        n = intro["leveringer"]
+        return f"Spar op til {kr(intro['beloeb'])} på de {TAL.get(n, n)} første kasser."
+    if intro["type"] == "procent_pr_levering":
+        return procent_raekke(intro) + "."
+    raise ValueError(intro["type"])
+
+
+def tilbud_til_nye(intro):
+    if intro["type"] == "op_til_kr":
+        n = intro["leveringer"]
+        return f"Som ny kunde kan du spare op til {kr(intro['beloeb'])} på de {TAL.get(n, n)} første kasser."
+    if intro["type"] == "procent_pr_levering":
+        return f"Som ny kunde får du {procent_raekke(intro)}."
+    raise ValueError(intro["type"])
+
+
+def forbehold(intro):
+    if not intro:
+        return ""
+    if intro["type"] == "op_til_kr":
+        return ("Vi kunne ikke se, hvor stor rabatten er på hver kasse, uden at oprette en konto. "
+                "Derfor kender vi ikke prisen på første levering, og de første 8 uger kan blive "
+                "billigere end vist.")
+    if intro["type"] == "procent_pr_levering" and intro.get("rabat_paa_fragt") is None:
+        return "Vi ved ikke, om rabatten også gælder leveringen, så vi har kun trukket den fra kassens pris."
+    return ""
+
+
+# Byggeklodser til siderne
+
+def side(*, sti, titel, beskrivelse, indhold, jsonld=None, aktiv=None, prefiks=None,
+         stil="", indekser=True):
     dybde = sti.count("/")
     pre = prefiks if prefiks is not None else "../" * dybde
     hjem = pre or "./"
-    kanonisk = SITE_URL + sti
     menu = []
     for href, tekst in [(KATEGORI_STI, "Måltidskasser"), ("om/", "Om sitet")]:
         markering = ' aria-current="page"' if href == aktiv else ""
         menu.append(f'<a href="{pre}{href}"{markering}>{e(tekst)}</a>')
-    maerke = ""
-    if vis_maerke:
-        maerke = f'<a class="maerke" href="{hjem}" aria-label="{SITE_NAVN}, forsiden">{STICKER}</a>\n'
+    if indekser:
+        kanonisk = SITE_URL + sti
+        meta_url = (f'<link rel="canonical" href="{e(kanonisk)}">\n'
+                    f'<meta property="og:url" content="{e(kanonisk)}">\n')
+    else:
+        meta_url = '<meta name="robots" content="noindex">\n'
     ld = jsonld_tag(jsonld) if jsonld else ""
+    stil_tag = f"<style>\n{stil}\n</style>\n" if stil else ""
     return f"""<!doctype html>
 <html lang="da">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>{e(titel)}</title>
 <meta name="description" content="{e(beskrivelse)}">
-<link rel="canonical" href="{e(kanonisk)}">
-<meta property="og:type" content="website">
+{meta_url}<meta property="og:type" content="website">
 <meta property="og:locale" content="da_DK">
-<meta property="og:site_name" content="{SITE_NAVN}">
+<meta property="og:site_name" content="{e(SITE_NAVN)}">
 <meta property="og:title" content="{e(titel)}">
 <meta property="og:description" content="{e(beskrivelse)}">
-<meta property="og:url" content="{e(kanonisk)}">
-<meta name="theme-color" content="#a31a55">
+<meta name="theme-color" content="#e6f2eb">
 <link rel="icon" href="{pre}favicon.svg" type="image/svg+xml">
+<link rel="preload" href="{pre}fonts/ajt-serif.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="{pre}styles.css">
-{ld}</head>
+{stil_tag}{ld}</head>
 <body>
 <a class="spring" href="#indhold">Gå til indholdet</a>
-<header class="top">
-{maerke}<nav aria-label="Hovedmenu">{"".join(menu)}</nav>
+<header class="top-baand">
+<div class="ramme top">
+<a class="maerke" href="{hjem}"><img src="{pre}logo.svg" width="564" height="83" alt="{e(SITE_NAVN)}, forsiden"></a>
+<nav aria-label="Hovedmenu">{"".join(menu)}</nav>
+</div>
 </header>
 <main id="indhold">
 {indhold}
 </main>
 <footer class="bund">
-<div class="bund-indre">
-<p>{SITE_NAVN} er en del af {UDGIVER}. Skriv til <a href="mailto:{KONTAKT}">{KONTAKT}</a>, hvis du ser en fejl.</p>
-<p>Sitet sætter ingen cookies. <a href="{pre}om/">Læs om, hvordan sitet tjener penge</a>.</p>
+<div class="ramme">
+<p class="bund-navn">{e(SITE_NAVN)}</p>
+<p>En oversigt fra {UDGIVER}. Skriv til <a href="mailto:{KONTAKT}">{KONTAKT}</a>, hvis du ser en fejl.</p>
+<p>Sitet sætter ingen cookies. <a href="{pre}om/#penge">Sådan tjener vi penge</a>.</p>
 </div>
 </footer>
 </body>
@@ -124,106 +251,249 @@ def side(*, sti, titel, beskrivelse, indhold, jsonld=None, aktiv=None,
 """
 
 
-def udbyder_html(u):
-    annonce = bool(u.get("affiliate_link"))
-    href = u["affiliate_link"] if annonce else u["link"]
-    rel = ' rel="sponsored"' if annonce else ""
-    maerkat = ' <span class="annonce">Annoncelink</span>' if annonce else ""
-    pris = e(u["pris"])
-    if u["pris_note"]:
-        pris += f'<span class="note">{e(u["pris_note"])}</span>'
-    fakta = [
-        ("Pris", pris),
-        ("Introtilbud", e(u["intro"])),
-        ("Binding", e(u["binding"])),
-        ("Økologi", e(u["oekologi"])),
-        ("Levering", e(u["levering"])),
-    ]
-    fakta_html = "\n".join(f"<div><dt>{navn}</dt><dd>{vaerdi}</dd></div>"
-                           for navn, vaerdi in fakta if vaerdi)
-    return f"""<article class="udbyder" id="{e(u["id"])}">
-<h3>{e(u["udbyder"])}</h3>
-<p class="loesning">{e(u["loesning"])}</p>
-<p>{e(u["beskrivelse"])}</p>
-<dl class="fakta">
-{fakta_html}
+def knap(udbyder):
+    """Knappen videre til udbyderen. Er der et reklamelink, mærkes det lige ved knappen."""
+    navn = e(udbyder["navn"])
+    if udbyder.get("reklamelink"):
+        return (f'<div class="videre"><a class="knap" href="{e(udbyder["reklamelink"])}" '
+                f'rel="sponsored">Gå til {navn}</a> <span class="reklame">Reklamelink</span></div>')
+    return f'<div class="videre"><a class="knap" href="{e(udbyder["link"])}">Gå til {navn}</a></div>'
+
+
+def beloeb_html(beloeb, hoejst=False):
+    if beloeb is None:
+        return '<span class="ukendt-tal">Ukendt</span>'
+    foran = '<span class="forbehold">højst</span>' if hoejst else ""
+    return f'{foran}<span class="beloeb">{kr_tal(beloeb)}</span> <span class="enhed">kr.</span>'
+
+
+def vilkaar_html(u):
+    punkter = [("Binding", u.get("binding")), ("Levering", u.get("levering")),
+               ("Økologi", u.get("oekologi"))]
+    raekker = "\n".join(f"<div><dt>{navn}</dt><dd>{e(vaerdi)}</dd></div>"
+                        for navn, vaerdi in punkter if vaerdi)
+    return f"""<details class="vilkaar">
+<summary>Binding, levering og økologi</summary>
+<dl>
+{raekker}
 </dl>
-<p class="videre"><a class="knap" href="{e(href)}"{rel}>Gå til {e(u["udbyder"])}</a>{maerkat}</p>
-</article>"""
+</details>"""
 
 
-def efter_navn(udbydere):
-    return sorted(udbydere, key=lambda u: u["udbyder"].lower())
+def kontrol_html(b):
+    if not b.get("kontrolleret"):
+        return ""
+    if b.get("kilde"):
+        return (f'<p class="kontrol">Prisen er kontrolleret {dansk_dato(b["kontrolleret"])} på '
+                f'<a href="{e(b["kilde"])}">{e(domaene(b["kilde"]))}</a>.</p>')
+    return f'<p class="kontrol">Prisen er kontrolleret {dansk_dato(b["kontrolleret"])}.</p>'
 
 
-def kategoriside(udbydere, ikke_med, opdateringer, opdateret):
-    kasser = efter_navn([u for u in udbydere if u["type"] == "måltidskasse"])
-    faerdig = efter_navn([u for u in udbydere if u["type"] == "færdigretter"])
+def udbyder_html(u, b, plan, felt, uger):
+    intro = u.get("intro")
+    levering = f"levering koster {kr(u['fragt'])}" if u["fragt"] else "levering er gratis"
+    if b["status"] == "ukendt":
+        tekst = (f"Vi kunne ikke se prisen for {plan_tekst(plan)}, da vi kontrollerede "
+                 f"{dansk_dato(b['kontrolleret'])}. " + punktum(levering[0].upper() + levering[1:]))
+        pris = f'<p class="ukendt">{e(tekst)}</p>'
+        kontrol = ""
+    else:
+        celler = [
+            ("foerste", "Første levering", beloeb_html(b["foerste"], b["hoejst"])),
+            ("uge", "Normalpris pr. uge", beloeb_html(b["uge"])),
+            ("otte", f"{uger} uger i alt", beloeb_html(b["otte"], b["hoejst"])),
+        ]
+        celle_html = "\n".join(
+            f'<div{" class=\"valgt\"" if noegle == felt else ""}><dt>{e(navn)}</dt><dd>{vaerdi}</dd></div>'
+            for noegle, navn, vaerdi in celler)
+        saetninger = [punktum(f"Kassen koster {kr(b['kasse'])}, og {levering}"),
+                      f"Det giver {kr(b['pr_portion'])} pr. portion."]
+        if not intro:
+            saetninger.append(f"Der er ikke noget introtilbud, så alle {TAL.get(uger, uger)} uger koster det samme.")
+        pris = (f'<dl class="priser">\n{celle_html}\n</dl>\n'
+                f'<p class="regnestykke">{e(" ".join(saetninger))}</p>')
+        kontrol = kontrol_html(b)
+    # Tilbud står for sig på rosa, ligesom på forsiden.
+    noter = []
+    if intro:
+        noter.append(tilbud_til_nye(intro))
+        if b["status"] != "ukendt" and forbehold(intro):
+            noter.append(forbehold(intro))
+    if u.get("andet_tilbud"):
+        noter.append(u["andet_tilbud"])
+    tilbud = f'<p class="tilbud-boks">{e(" ".join(noter))}</p>\n' if noter else ""
+    return f"""<li class="udbyder">
+<h3>{e(u["navn"])}</h3>
+<p class="loesning">{e(u["loesning"])}</p>
+{pris}
+{tilbud}<p class="beskrivelse">{e(u["beskrivelse"])}</p>
+{vilkaar_html(u)}
+{knap(u)}
+{kontrol}
+</li>"""
+
+
+def tilbud_html(udbydere, overskrift="h2"):
+    punkter = []
+    datoer = []
+    for u in sorted(udbydere, key=lambda u: u["navn"].lower()):
+        if u.get("intro"):
+            punkter.append((u["navn"], tilbud_kort(u["intro"]), "Gælder nye kunder."))
+            datoer.append(u["intro"].get("kontrolleret"))
+        if u.get("andet_tilbud"):
+            punkter.append((u["navn"], u["andet_tilbud"], ""))
+    if not punkter:
+        return ""
+    datoer = [d for d in datoer if d]
+    dato = f" Vi har tjekket dem {dansk_dato(max(datoer))}." if datoer else ""
+    li = "\n".join(
+        f'<li><span class="tilbud-navn">{e(navn)}</span> {e(tekst)}'
+        f'{" <span class=\"tilbud-note\">" + e(note) + "</span>" if note else ""}</li>'
+        for navn, tekst, note in punkter)
+    return f"""<section class="tilbud" aria-labelledby="tilbud">
+<{overskrift} id="tilbud">Tilbud lige nu</{overskrift}>
+<p class="tilbud-intro">Tilbuddene kan ændre sig fra uge til uge.{dato}</p>
+<ul class="tilbud-liste">
+{li}
+</ul>
+</section>"""
+
+
+# Siderne
+
+def kategoriside(data, beregninger, opdateret):
+    kat = data["kategori"]
+    planer = kat["planer"]
+    uger = kat["uger"]
+    udbydere = data["udbydere"]
     dato = dansk_dato(opdateret)
 
-    raekker = "\n".join(
-        f'<tr><th scope="row"><a href="#{e(u["id"])}">{e(u["udbyder"])}</a></th>'
-        f'<td>{e(u["pris"])}</td><td>{e(u["binding_kort"])}</td></tr>'
-        for u in kasser)
+    plan_valg = "\n".join(
+        f'<input type="radio" name="plan" id="plan-{p["id"]}" value="{p["id"]}"'
+        f'{" checked" if i == 0 else ""}><label for="plan-{p["id"]}">{p["personer"]} personer</label>'
+        for i, p in enumerate(planer))
+    sort_valg = "\n".join(
+        f'<input type="radio" name="sortering" id="sort-{s}" value="{s}"'
+        f'{" checked" if i == 0 else ""}><label for="sort-{s}">{e(navn)}</label>'
+        for i, (s, navn) in enumerate(SORTERINGER))
+    retter = sorted({p["retter"] for p in planer})
+    retter_tekst = f"{retter[0]} retter om ugen" if len(retter) == 1 else "et fast antal retter om ugen"
 
-    dele = [f"""<h1>Vegetariske måltidskasser</h1>
-<p class="lead">Her er de måltidskasser, hvor hele leverancen kan være uden kød og fisk. Vi har aflæst priser og vilkår hos udbyderne den {dato}.</p>
+    lister = []
+    for i, plan in enumerate(planer):
+        for j, (felt, _) in enumerate(SORTERINGER):
+            raekke = sorted(udbydere, key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]], felt))
+            if felt == "otte":
+                status = f"{plan_tekst(plan)}. Billigst de første {uger}\u00a0uger står øverst."
+                if any(beregninger[u["id"]][plan["id"]]["status"] == "hoejst" for u in udbydere):
+                    status += " Kender vi ikke hele rabatten, sorterer vi efter den højeste pris, det kan blive."
+            else:
+                status = f"{plan_tekst(plan)}. Lavest normalpris står øverst."
+            punkter = "\n".join(udbyder_html(u, beregninger[u["id"]][plan["id"]], plan, felt, uger)
+                                for u in raekke)
+            lister.append(f"""<div class="liste" data-vis="{plan["id"]}-{felt}">
+<p class="liste-status">{e(status)}</p>
+<ol class="udbydere">
+{punkter}
+</ol>
+</div>""")
 
-<h2 id="overblik">Overblik</h2>
-<table class="overblik">
-<caption>Priser og binding, aflæst {dato}</caption>
-<thead><tr><th scope="col">Udbyder</th><th scope="col">Pris</th><th scope="col">Binding</th></tr></thead>
-<tbody>
-{raekker}
-</tbody>
-</table>
+    vis_regler = ",\n".join(
+        f'.sammenligning:has(#plan-{p["id"]}:checked):has(#sort-{s}:checked) [data-vis="{p["id"]}-{s}"]'
+        for p in planer for s, _ in SORTERINGER)
+    stil = f"@supports selector(:has(a)) {{\n{vis_regler} {{\n  display: block;\n}}\n}}"
 
-<h2 id="kasserne">Kasserne en for en</h2>
-""" + "\n".join(udbyder_html(u) for u in kasser)]
+    faerdig = ""
+    if data.get("faerdigretter"):
+        blokke = []
+        for f in data["faerdigretter"]:
+            fakta = "\n".join(f"<div><dt>{e(navn)}</dt><dd>{e(vaerdi)}</dd></div>" for navn, vaerdi in f["fakta"])
+            blokke.append(f"""<div class="faerdig">
+<h3>{e(f["navn"])}</h3>
+<p class="loesning">{e(f["loesning"])}</p>
+<p>{e(f["beskrivelse"])}</p>
+<dl class="fakta">
+{fakta}
+</dl>
+{knap(f)}
+<p class="kontrol">Kontrolleret {dansk_dato(f["kontrolleret"])}.</p>
+</div>""")
+        faerdig = f"""<h2 id="faerdigretter">Hvis I hellere vil have færdigretter</h2>
+<p>Færdigretter skal bare varmes. De er ikke med i sammenligningen ovenfor, fordi man ikke køber dem pr. ret og person på samme måde.</p>
+{"".join(blokke)}"""
 
-    if faerdig:
-        dele.append("""<h2 id="faerdigretter">Færdigretter, hvis du ikke vil lave mad</h2>
-<p>Vil du helst slippe for at lave mad, kan færdigretter være et alternativ. De skal bare varmes.</p>
-""" + "\n".join(udbyder_html(u) for u in faerdig))
-
-    if ikke_med:
-        punkter = "\n".join(f'<li><strong>{e(r["udbyder"])}.</strong> {e(r["grund"])}</li>'
-                            for r in ikke_med)
-        dele.append(f"""<h2 id="ikke-med">Ikke med lige nu</h2>
+    ikke_med = ""
+    if data.get("ikke_med"):
+        punkter = "\n".join(f"<li><strong>{e(navn)}.</strong> {e(grund)}</li>" for navn, grund in data["ikke_med"])
+        ikke_med = f"""<h2 id="ikke-med">Ikke med lige nu</h2>
 <ul class="ikke-med">
 {punkter}
-</ul>""")
-
-    dele.append(f"""<h2 id="metode">Sådan sammenligner vi</h2>
-<p>Vi aflæser priser og vilkår på udbydernes egne sider og skriver datoen på. Fra-prisen er den laveste pris, udbyderen selv viser, og den gælder som regel den største kasse. Introtilbud står for sig, fordi de kun gælder de første leveringer.</p>
-<p>Vi rangerer ikke udbyderne. De står i alfabetisk rækkefølge, og alle står på samme måde, uanset om vi har en aftale med dem. Tjek altid prisen hos udbyderen, før du bestiller, for den kan have ændret sig siden.</p>
-
-<h2 id="data">Hent tabellen</h2>
-<p>Oversigten ligger også som <a href="../data/{DATAFIL}.csv">CSV-fil</a> og som <a href="../data/{DATAFIL}.json">JSON</a>, så du kan bruge den i dit eget regneark.</p>""")
+</ul>"""
 
     log = "\n".join(
-        f'<li><time datetime="{e(r["dato"])}">{dansk_dato(r["dato"])}</time>: {e(r["tekst"])}</li>'
-        for r in sorted(opdateringer, key=lambda r: r["dato"], reverse=True))
-    dele.append(f"""<h2 id="aendringer">Ændringer</h2>
+        f'<li><time datetime="{e(d)}">{dansk_dato(d)}</time> {e(t)}</li>'
+        for d, t in sorted(data.get("opdateringer", []), reverse=True))
+
+    indhold = f"""<div class="sammenligning">
+<section class="intro">
+<div class="ramme">
+<h1>Vegetariske måltidskasser</h1>
+<p class="lead">Her er måltidskasserne, hvor hele kassen kan være uden kød og fisk. Vælg, hvor mange I er, så viser vi prisen på første levering, normalprisen og hvad de første {uger} uger koster.</p>
+<p class="dato">Vi regner med {retter_tekst}. Priserne er kontrolleret {dato}.</p>
+<div class="valg">
+<fieldset class="segment">
+<legend>Hvor mange er I?</legend>
+<div class="segment-valg">
+{plan_valg}
+</div>
+</fieldset>
+<fieldset class="segment">
+<legend>Sortér efter</legend>
+<div class="segment-valg">
+{sort_valg}
+</div>
+</fieldset>
+</div>
+</div>
+</section>
+<div class="ramme lister">
+{chr(10).join(lister)}
+</div>
+</div>
+<div class="ramme">
+{faerdig}
+{ikke_med}
+<h2 id="metode">Sådan regner vi</h2>
+<div class="tekst">
+<p>Normalprisen pr. uge er kassen plus levering, uden tilvalg. Vi regner med {retter_tekst}.</p>
+<p>Prisen for de første {uger} uger er {TAL.get(uger, uger)} leveringer i træk, hvor introtilbuddet er trukket fra. Den viser, hvad kassen koster, også efter at tilbuddet er brugt op.</p>
+<p>Kender vi ikke hele rabatten, skriver vi højst foran beløbet og sorterer efter det. Kan vi slet ikke se en pris, står udbyderen nederst.</p>
+<p>Rækkefølgen afgøres kun af den pris, du sorterer efter. Om en udbyder betaler os for et link, ændrer ikke rækkefølgen.</p>
+<p>Beløbene er afrundet til hele kroner. Vi har ikke smagt maden, så vi siger ikke noget om, hvordan den smager. Tjek altid prisen hos udbyderen, før du bestiller, for den kan have ændret sig.</p>
+</div>
+<h2 id="data">Hent tallene</h2>
+<p>Alle tallene ligger også som <a href="../data/{DATAFIL}.csv">CSV-fil</a> og som <a href="../data/{DATAFIL}.json">JSON</a>, hvis du vil regne selv.</p>
+<h2 id="aendringer">Ændringer</h2>
 <ul class="log">
 {log}
-</ul>""")
+</ul>
+</div>"""
 
     url = SITE_URL + KATEGORI_STI
+    alfabetisk = sorted(udbydere, key=lambda u: u["navn"].lower())
     jsonld = {
         "@context": "https://schema.org",
         "@graph": [
-            {"@type": "WebPage", "@id": url, "url": url, "name": "Vegetariske måltidskasser",
-             "inLanguage": "da", "dateModified": opdateret, "isPartOf": {"@id": SITE_URL + "#site"}},
+            {"@type": "WebPage", "@id": url, "url": url, "name": kat["navn"], "inLanguage": "da",
+             "dateModified": opdateret, "isPartOf": {"@id": SITE_URL + "#site"}},
             {"@type": "ItemList", "name": "Vegetariske måltidskasser i Danmark",
-             "itemListOrder": "https://schema.org/ItemListOrderAscending",
-             "numberOfItems": len(kasser),
-             "itemListElement": [{"@type": "ListItem", "position": i, "name": u["udbyder"],
-                                  "url": u["link"]} for i, u in enumerate(kasser, start=1)]},
-            {"@type": "Dataset", "name": "Vegetariske måltidskasser i Danmark",
-             "description": "Priser, introtilbud, binding, økologi og levering for vegetariske "
-                            "måltidskasser og færdigretter i Danmark, aflæst hos udbyderne og "
-                            "opdateret hver måned.",
+             "itemListOrder": "https://schema.org/ItemListUnordered",
+             "numberOfItems": len(alfabetisk),
+             "itemListElement": [{"@type": "ListItem", "position": i, "name": f'{u["navn"]}, {u["loesning"]}',
+                                  "url": u["link"]} for i, u in enumerate(alfabetisk, start=1)]},
+            {"@type": "Dataset", "name": "Priser på vegetariske måltidskasser i Danmark",
+             "description": f"Pris på første levering, normalpris pr. uge og samlet pris for de første {uger} uger "
+                            "for vegetariske måltidskasser til 2 og 4 personer, aflæst hos udbyderne.",
              "url": url, "inLanguage": "da", "dateModified": opdateret,
              "creator": {"@type": "Organization", "name": UDGIVER},
              "distribution": [
@@ -233,149 +503,231 @@ def kategoriside(udbydere, ikke_med, opdateringer, opdateret):
                   "contentUrl": f"{SITE_URL}data/{DATAFIL}.json"}]},
         ],
     }
-    navne = [u["udbyder"] for u in kasser]
-    opremsning = navne[0] if len(navne) == 1 else ", ".join(navne[:-1]) + " og " + navne[-1]
-    return side(sti=KATEGORI_STI, titel="Vegetariske måltidskasser i Danmark | Abonnement ja tak",
-                beskrivelse=f"Sammenligning af vegetariske måltidskasser fra {opremsning}. "
-                            f"Priser, introtilbud og binding aflæst {dato}.",
-                indhold="\n\n".join(dele), jsonld=jsonld, aktiv=KATEGORI_STI)
+    navne = oprems(u["navn"] for u in alfabetisk)
+    return side(sti=KATEGORI_STI,
+                titel=f"Vegetariske måltidskasser: hvad koster de første {uger} uger? | {SITE_NAVN}",
+                beskrivelse=f"Sammenlign vegetariske måltidskasser fra {navne}. Se prisen på første levering, "
+                            f"normalprisen og de første {uger} uger for 2 og 4 personer. Kontrolleret {dato}.",
+                indhold=indhold, jsonld=jsonld, aktiv=KATEGORI_STI, stil=stil)
 
 
-def forside(udbydere, opdateret):
-    n_kasser = sum(1 for u in udbydere if u["type"] == "måltidskasse")
-    n_faerdig = sum(1 for u in udbydere if u["type"] == "færdigretter")
-    omfang = antal(n_kasser, "måltidskasse", "måltidskasser").capitalize()
-    if n_faerdig:
-        omfang += " og " + antal(n_faerdig, "udbyder", "udbydere") + " af færdigretter"
-    indhold = f"""<section class="hero">
-<div class="forside-maerke">{STICKER}</div>
-<h1>Abonnementer, der gør hverdagen nemmere</h1>
-<p class="lead">Vi samler de abonnementer, der sparer dig for en indkøbstur eller en beslutning, og tjekker priserne hos udbyderne hver måned. Vi er startet med vegetariske måltidskasser.</p>
+def forside(data, beregninger, opdateret):
+    kat = data["kategori"]
+    plan = kat["planer"][0]
+    uger = kat["uger"]
+    udbydere = data["udbydere"]
+    raekke = sorted(udbydere, key=lambda u: sorteringsnoegle(u, beregninger[u["id"]][plan["id"]], "otte"))
+    menu = []
+    ukendte = []
+    for u in raekke:
+        b = beregninger[u["id"]][plan["id"]]
+        if b["status"] == "ukendt":
+            ukendte.append(u["navn"])
+            continue
+        foran = '<span class="forbehold-lille">højst</span> ' if b["hoejst"] else ""
+        menu.append(f'<li><span class="navn">{e(u["navn"])}</span><span class="prikker" aria-hidden="true"></span>'
+                    f'<span class="pris">{foran}{kr(b["otte"])}</span></li>')
+    note = f"Priserne er kontrolleret {dansk_dato(opdateret)}."
+    if ukendte:
+        note = f"Vi kunne ikke se prisen hos {oprems(ukendte)}. " + note
+    indhold = f"""<section class="intro forside-intro">
+<div class="ramme">
+<h1>Abonnementer på det, du bruger igen og igen</h1>
+<p class="lead">Vi sammenligner abonnementer på ting, der kommer af sig selv, og regner ud, hvad de koster de første {TAL.get(uger, uger)} uger. Vi er startet med vegetariske måltidskasser.</p>
 <p><a class="knap" href="{KATEGORI_STI}">Se de vegetariske måltidskasser</a></p>
+<section class="smagsproeve" aria-labelledby="eksempel">
+<h2 id="eksempel">Vegetarisk måltidskasse til {plan["personer"]} personer</h2>
+<p class="smagsproeve-under">De første {uger} uger med {plan["retter"]} retter om ugen, levering og introtilbud.</p>
+<ol class="menukort">
+{chr(10).join(menu)}
+</ol>
+<p class="smagsproeve-note">{e(note)} <a href="{KATEGORI_STI}">Se hele sammenligningen</a></p>
 </section>
-
-<section aria-labelledby="kategorier">
-<h2 id="kategorier">Det kan du sammenligne nu</h2>
-<a class="kort" href="{KATEGORI_STI}">
-<span class="kort-titel">Vegetariske måltidskasser</span>
-<span class="kort-tekst">{omfang}. Opdateret {dansk_dato(opdateret)}.</span>
-</a>
-<p class="snart">Bagefter kommer bleer, shampoo og andre ting, der kan komme af sig selv.</p>
+</div>
 </section>
-
-<section class="principper" aria-labelledby="saadan">
-<h2 id="saadan">Sådan arbejder vi</h2>
-<h3>Vi tjekker priserne selv</h3>
-<p>Hver måned aflæser vi priser og vilkår direkte hos udbyderne og skriver datoen på, så du kan se, hvor friske tallene er.</p>
-<h3>Vi er strenge med, hvad der kommer med</h3>
-<p>I måltidskasserne er det kun kasser, hvor hele leverancen kan være uden kød og fisk. Dem, der ikke lever op til det, står på en liste for sig med en forklaring.</p>
-<h3>Vi siger, hvordan vi tjener penge</h3>
-<p>Nogle links kan give os en provision, når du køber. De bliver mærket med ordet Annoncelink, og de afgør ikke, hvem der er med.</p>
-</section>"""
+<div class="ramme">
+{tilbud_html(udbydere)}
+<h2 id="saadan">Sådan regner vi</h2>
+<div class="principper">
+<div>
+<h3>Vi regner otte uger frem</h3>
+<p>Et introtilbud gør den første kasse billig. Derfor viser vi også, hvad de første otte uger koster, så du kan se prisen, når tilbuddet er brugt.</p>
+</div>
+<div>
+<h3>Vi skriver kun priser, vi selv har set</h3>
+<p>Vi aflæser priserne hos udbyderne og skriver datoen på. Kan vi ikke se en pris, skriver vi det i stedet for at gætte.</p>
+</div>
+<div>
+<h3>Vi mærker reklamelinks</h3>
+<p>Kan et link give os penge, står der Reklamelink ved knappen. Det ændrer ikke rækkefølgen, som kun afgøres af prisen.</p>
+</div>
+</div>
+<h2 id="senere">Det kommer senere</h2>
+<p>Kaffe, bleer, shampoo og dyremad står på listen. Vi tilføjer en kategori, når vi har tjekket priserne.</p>
+</div>"""
     jsonld = {
         "@context": "https://schema.org",
         "@graph": [
             {"@type": "WebSite", "@id": SITE_URL + "#site", "url": SITE_URL, "name": SITE_NAVN,
              "inLanguage": "da", "publisher": {"@id": SITE_URL + "#udgiver"}},
-            {"@type": "Organization", "@id": SITE_URL + "#udgiver", "name": UDGIVER,
-             "email": KONTAKT},
+            {"@type": "Organization", "@id": SITE_URL + "#udgiver", "name": UDGIVER, "email": KONTAKT},
         ],
     }
-    return side(sti="", titel="Abonnement ja tak | Abonnementer, der gør hverdagen nemmere",
-                beskrivelse="Uafhængig oversigt over abonnementer, der gør hverdagen nemmere. "
-                            "Vi starter med vegetariske måltidskasser og tjekker priserne hver måned.",
-                indhold=indhold, jsonld=jsonld, vis_maerke=False)
+    return side(sti="", titel=f"{SITE_NAVN} | Abonnementer på det, du bruger igen og igen",
+                beskrivelse="Vi sammenligner abonnementer på måltidskasser og andet, der kommer af sig selv, "
+                            "og regner ud, hvad de koster de første otte uger.",
+                indhold=indhold, jsonld=jsonld)
 
 
-def omside():
-    indhold = f"""<h1>Om Abonnement ja tak</h1>
-<p class="lead">Abonnement ja tak samler de abonnementer, der gør hverdagen nemmere, og holder øje med priserne, så du ikke selv skal.</p>
-
-<h2>Hvem står bag</h2>
-<p>Sitet er en del af {UDGIVER}, som laver uafhængige guider til hverdagen. Du kan skrive til os på <a href="mailto:{KONTAKT}">{KONTAKT}</a>.</p>
-
-<h2>Sådan tjener vi penge</h2>
-<p>Det er gratis at bruge sitet. Vi er ved at lave aftaler med udbyderne, så vi kan få en provision, når nogen køber gennem vores links. Det koster ikke dig noget ekstra.</p>
-<p>Et link, der kan give os provision, bliver mærket med ordet Annoncelink lige ved siden af knappen. En aftale afgør ikke, om en udbyder kommer med, eller hvad vi skriver om den, og udbydere uden aftale står på siden på samme måde som de andre.</p>
-
-<h2>Sådan finder vi tallene</h2>
-<p>Vi aflæser priser og vilkår på udbydernes egne sider og skriver datoen på hver gang. Tallene kan have ændret sig siden, så tjek altid prisen hos udbyderen, før du bestiller.</p>
-
-<h2>Cookies</h2>
-<p>Sitet sætter ingen cookies og bruger ingen statistik. Når du klikker videre til en udbyder, gælder udbyderens egne regler.</p>"""
-    return side(sti="om/", titel="Om sitet | Abonnement ja tak",
-                beskrivelse="Hvem står bag Abonnement ja tak, hvordan vi finder priserne, og hvordan sitet tjener penge.",
+def omside(data):
+    reklame = any(u.get("reklamelink") for u in data["udbydere"] + data.get("faerdigretter", []))
+    status = ("" if reklame else " Lige nu er ingen af knapperne reklamelinks.")
+    indhold = f"""<section class="intro">
+<div class="ramme">
+<h1>Om {SITE_NAVN}</h1>
+<p class="lead">{SITE_NAVN} sammenligner abonnementer på det, du bruger igen og igen. Vi regner ud, hvad de koster, så du ikke selv skal.</p>
+</div>
+</section>
+<div class="ramme tekst">
+<h2 id="hvem">Hvem står bag</h2>
+<p>Sitet er en del af {UDGIVER}. Du kan skrive til os på <a href="mailto:{KONTAKT}">{KONTAKT}</a>.</p>
+<h2 id="penge">Sådan tjener vi penge</h2>
+<p>Det er gratis at bruge sitet. Nogle udbydere betaler os et beløb, når nogen bliver kunde gennem vores link. Det koster ikke dig noget ekstra.</p>
+<p>Et link, der kan give os penge, er mærket med ordet Reklamelink lige ved knappen.{status}</p>
+<p>En aftale afgør ikke, om en udbyder kommer med, eller hvor den står. Rækkefølgen afgøres kun af prisen.</p>
+<h2 id="tal">Sådan finder vi tallene</h2>
+<p>Vi aflæser priser og vilkår hos udbyderne selv. Nogle gange går vi bestillingen igennem, men vi stopper før betaling. Vi skriver datoen på hver pris.</p>
+<p>Kan vi ikke se en pris, skriver vi det i stedet for at gætte.</p>
+<h2 id="vurdering">Det vurderer vi ikke</h2>
+<p>Vi har ikke smagt maden og siger ikke noget om kvaliteten. Vi sammenligner pris og vilkår.</p>
+<h2 id="cookies">Cookies</h2>
+<p>Sitet sætter ingen cookies og bruger ingen statistik. Når du klikker videre til en udbyder, gælder udbyderens egne regler.</p>
+</div>"""
+    return side(sti="om/", titel=f"Om sitet | {SITE_NAVN}",
+                beskrivelse="Hvem står bag Abonnement, ja tak, hvordan vi finder priserne, og hvordan sitet tjener penge.",
                 indhold=indhold, aktiv="om/")
 
 
 def side404():
-    indhold = f"""<h1>Siden findes ikke</h1>
-<p>Adressen passer ikke til nogen side her. Gå til <a href="/">forsiden</a> eller til <a href="/{KATEGORI_STI}">de vegetariske måltidskasser</a>.</p>"""
-    return side(sti="404.html", titel="Siden findes ikke | Abonnement ja tak",
-                beskrivelse="Siden findes ikke.", indhold=indhold, prefiks="/")
+    indhold = f"""<section class="intro">
+<div class="ramme">
+<h1>Siden findes ikke</h1>
+<p class="lead">Adressen passer ikke til nogen side her. Gå til <a href="/">forsiden</a> eller til <a href="/{KATEGORI_STI}">de vegetariske måltidskasser</a>.</p>
+</div>
+</section>"""
+    return side(sti="404.html", titel=f"Siden findes ikke | {SITE_NAVN}", beskrivelse="Siden findes ikke.",
+                indhold=indhold, prefiks="/", indekser=False)
 
 
-def datafiler(udbydere, opdateret):
+# Filer til maskiner og regneark
+
+def datafiler(data, beregninger, opdateret):
+    kat = data["kategori"]
+    kolonner = ["id", "udbyder", "loesning", "personer", "retter_om_ugen", "kassepris_kr", "levering_kr",
+                "normalpris_pr_uge_kr", "pr_portion_kr", "foerste_levering_kr", f"{kat['uger']}_uger_kr",
+                "status", "introtilbud", "kontrolleret", "kilde", "link"]
+    raekker = []
+    for u in sorted(data["udbydere"], key=lambda u: u["navn"].lower()):
+        for plan in kat["planer"]:
+            b = beregninger[u["id"]][plan["id"]]
+            ukendt = b["status"] == "ukendt"
+
+            def tal(navn, b=b, ukendt=ukendt):
+                v = None if ukendt else b.get(navn)
+                return "" if v is None else hele_kroner(v)
+
+            raekker.append({
+                "id": u["id"], "udbyder": u["navn"], "loesning": u["loesning"],
+                "personer": plan["personer"], "retter_om_ugen": plan["retter"],
+                "kassepris_kr": tal("kasse"), "levering_kr": u["fragt"],
+                "normalpris_pr_uge_kr": tal("uge"), "pr_portion_kr": tal("pr_portion"),
+                "foerste_levering_kr": tal("foerste"), f"{kat['uger']}_uger_kr": tal("otte"),
+                "status": {"sikker": "sikker", "hoejst": "højst", "ukendt": "ukendt"}[b["status"]],
+                "introtilbud": tilbud_kort(u["intro"]).replace("\u00a0", " ") if u.get("intro") else "",
+                "kontrolleret": b.get("kontrolleret") or "", "kilde": b.get("kilde") or "",
+                "link": u["link"],
+            })
     buf = io.StringIO()
-    w = csv.writer(buf, delimiter=";", lineterminator="\n")
-    w.writerow(OFFENTLIGE)
-    for u in udbydere:
-        w.writerow([u[k] for k in OFFENTLIGE])
+    w = csv.DictWriter(buf, fieldnames=kolonner, delimiter=";", lineterminator="\n")
+    w.writeheader()
+    w.writerows(raekker)
     skriv(f"data/{DATAFIL}.csv", buf.getvalue())
-    data = {
-        "navn": "Vegetariske måltidskasser i Danmark",
+    ud = {
+        "navn": "Priser på vegetariske måltidskasser i Danmark",
         "kilde": SITE_URL + KATEGORI_STI,
         "opdateret": opdateret,
-        "udbydere": [{k: u[k] for k in OFFENTLIGE} for u in udbydere],
+        "forklaring": {
+            "normalpris_pr_uge_kr": "Kassen plus levering, uden tilvalg.",
+            f"{kat['uger']}_uger_kr": f"{kat['uger']} leveringer i træk med introtilbuddet trukket fra.",
+            "status": "sikker: alle tal er kendt. højst: en del af rabatten er ukendt, så tallet er det "
+                      "højeste, det kan blive. ukendt: vi kunne ikke se prisen.",
+        },
+        "priser": raekker,
     }
-    skriv(f"data/{DATAFIL}.json", json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+    skriv(f"data/{DATAFIL}.json", json.dumps(ud, ensure_ascii=False, indent=2) + "\n")
 
 
-def maskinfiler(opdateret):
+def maskinfiler(data, opdateret):
     urls = ["", KATEGORI_STI, "om/"]
-    sitemap = "\n".join(f"<url><loc>{SITE_URL}{u}</loc><lastmod>{opdateret}</lastmod></url>"
-                        for u in urls)
+    sitemap = "\n".join(f"<url><loc>{SITE_URL}{u}</loc><lastmod>{opdateret}</lastmod></url>" for u in urls)
     skriv("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n'
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           f"{sitemap}\n</urlset>\n")
     skriv("robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}sitemap.xml\n")
+    uger = data["kategori"]["uger"]
+    navne = oprems(sorted(u["navn"] for u in data["udbydere"]))
     skriv("llms.txt", f"""# {SITE_NAVN}
 
-> Uafhængig dansk oversigt over abonnementer, der gør hverdagen nemmere. Første kategori er vegetariske måltidskasser. Priser og vilkår aflæses hos udbyderne hver måned, senest {dansk_dato(opdateret)}.
+> Dansk oversigt over abonnementer på det, man bruger igen og igen. Første kategori er vegetariske måltidskasser fra {navne}. For 2 og 4 personer med 3 retter om ugen viser sitet prisen på første levering, normalprisen pr. uge og den samlede pris for de første {uger} uger med levering og introtilbud. Priserne er aflæst hos udbyderne, senest {dansk_dato(opdateret)}. Hvor en pris ikke kunne ses, står der det.
 
 ## Sider
 
-- [Vegetariske måltidskasser]({SITE_URL}{KATEGORI_STI}): måltidskasser, hvor hele leverancen kan være uden kød og fisk, med priser, introtilbud, binding og levering
-- [Om sitet]({SITE_URL}om/): hvem står bag, og hvordan sitet tjener penge
+- [Vegetariske måltidskasser]({SITE_URL}{KATEGORI_STI}): sammenligning af priser, introtilbud, binding og levering
+- [Om sitet]({SITE_URL}om/): hvem står bag, hvordan tallene findes, og hvordan sitet tjener penge
 
 ## Data
 
-- [Vegetariske måltidskasser som CSV]({SITE_URL}data/{DATAFIL}.csv)
-- [Vegetariske måltidskasser som JSON]({SITE_URL}data/{DATAFIL}.json)
+- [Priser som CSV]({SITE_URL}data/{DATAFIL}.csv)
+- [Priser som JSON]({SITE_URL}data/{DATAFIL}.json)
 """)
     skriv(".nojekyll", "")
 
 
 def main():
-    udbydere = [u for u in laes(f"{DATAFIL}.csv") if u["vis"] == "ja"]
-    ikke_med = laes("ikke-med.csv")
-    opdateringer = laes("opdateringer.csv")
-    opdateret = max(u["aflaest"] for u in udbydere)
+    with open(DATA / "maaltidskasser.json", encoding="utf-8") as fh:
+        data = json.load(fh)
+    kat = data["kategori"]
+    beregninger = {u["id"]: {p["id"]: beregn(u, p, kat["uger"]) for p in kat["planer"]}
+                   for u in data["udbydere"]}
+    datoer = [b["kontrolleret"] for pr in beregninger.values() for b in pr.values() if b.get("kontrolleret")]
+    opdateret = max(datoer)
 
     if UD.exists():
         shutil.rmtree(UD)
     UD.mkdir()
-    for navn in ["styles.css", "favicon.svg", "CNAME"]:
+    for navn in ["styles.css", "favicon.svg", "logo.svg", "CNAME"]:
         if (SRC / navn).exists():
             shutil.copy(SRC / navn, UD / navn)
+    shutil.copytree(SRC / "fonts", UD / "fonts")
 
-    skriv("index.html", forside(udbydere, opdateret))
-    skriv(KATEGORI_STI + "index.html", kategoriside(udbydere, ikke_med, opdateringer, opdateret))
-    skriv("om/index.html", omside())
+    skriv("index.html", forside(data, beregninger, opdateret))
+    skriv(KATEGORI_STI + "index.html", kategoriside(data, beregninger, opdateret))
+    skriv("om/index.html", omside(data))
     skriv("404.html", side404())
-    datafiler(efter_navn(udbydere), opdateret)
-    maskinfiler(opdateret)
-    print(f"Bygget {len(udbydere)} udbydere, opdateret {opdateret}, i {UD}")
+    datafiler(data, beregninger, opdateret)
+    maskinfiler(data, opdateret)
+
+    for u in data["udbydere"]:
+        for p in kat["planer"]:
+            b = beregninger[u["id"]][p["id"]]
+            if b["status"] == "ukendt":
+                print(f"  {u['navn']} {p['id']}: pris ukendt")
+            else:
+                foerste = "ukendt" if b["foerste"] is None else kr(b["foerste"])
+                print(f"  {u['navn']} {p['id']}: første {foerste}, uge {kr(b['uge'])}, "
+                      f"{kat['uger']} uger {'højst ' if b['hoejst'] else ''}{kr(b['otte'])}, "
+                      f"portion {kr(b['pr_portion'])}")
+    print(f"Bygget {len(data['udbydere'])} udbydere, opdateret {opdateret}, i {UD}")
 
 
 if __name__ == "__main__":
