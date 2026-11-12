@@ -3,8 +3,16 @@
     "id": "vegetariske-maaltidskasser",
     "navn": "Vegetariske måltidskasser",
     "planer": [
-      {"id": "2x3", "personer": 2, "retter": 3},
-      {"id": "4x3", "personer": 4, "retter": 3}
+      {
+        "id": "2x3",
+        "personer": 2,
+        "retter": 3
+      },
+      {
+        "id": "4x3",
+        "personer": 4,
+        "retter": 3
+      }
     ]
   },
   "udbydere": [
@@ -17,8 +25,16 @@
       "reklamelink": "",
       "fragt": 49,
       "priser": {
-        "2x3": {"kasse": 429, "kontrolleret": "2026-11-10", "kilde": "https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen"},
-        "4x3": {"kasse": 739, "kontrolleret": "2026-11-10", "kilde": "https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen"}
+        "2x3": {
+          "kasse": 429,
+          "kontrolleret": "2026-11-10",
+          "kilde": "https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen"
+        },
+        "4x3": {
+          "kasse": 739,
+          "kontrolleret": "2026-11-10",
+          "kilde": "https://www.aarstiderne.com/maaltidskasser/maaltidskasse-vegetarkassen"
+        }
       },
       "intro": null,
       "andet_tilbud": "Med medlemskabet Aarstiderne Plus er kassen 10 % billigere, og levering er gratis. Medlemskabet kan tidligst opsiges efter 6 måneder.",
@@ -35,8 +51,16 @@
       "reklamelink": "",
       "fragt": 49,
       "priser": {
-        "2x3": {"kasse": 480, "kontrolleret": "2026-11-10", "kilde": "https://www.hellofresh.dk/plans"},
-        "4x3": {"kasse": 670, "kontrolleret": "2026-11-10", "kilde": "https://www.hellofresh.dk/plans"}
+        "2x3": {
+          "kasse": 480,
+          "kontrolleret": "2026-11-10",
+          "kilde": "https://www.hellofresh.dk/plans"
+        },
+        "4x3": {
+          "kasse": 670,
+          "kontrolleret": "2026-11-10",
+          "kilde": "https://www.hellofresh.dk/plans"
+        }
       },
       "intro": {
         "type": "op_til_kr",
@@ -58,14 +82,26 @@
       "reklamelink": "",
       "fragt": 49,
       "priser": {
-        "2x3": {"kasse": null, "kontrolleret": "2026-11-10"},
-        "4x3": {"kasse": null, "kontrolleret": "2026-11-10"}
+        "2x3": {
+          "kasse": 510,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://www.retnemt.dk/vaelg-maltidskasse?praeferencer=vegetar"
+        },
+        "4x3": {
+          "kasse": 690,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://www.retnemt.dk/vaelg-maltidskasse?praeferencer=vegetar"
+        }
       },
       "intro": {
         "type": "procent_pr_levering",
-        "procenter": [25, 15, 10],
-        "rabat_paa_fragt": null,
-        "kontrolleret": "2026-11-10"
+        "procenter": [
+          25,
+          15,
+          10
+        ],
+        "rabat_paa_fragt": false,
+        "kontrolleret": "2026-11-12"
       },
       "andet_tilbud": "",
       "binding": "Ingen binding. Du kan springe uger over, holde pause eller opsige. Bestil og ret senest onsdag kl. 23.59 for næste uge.",
@@ -82,18 +118,40 @@
       "link": "https://halkaeraadal.dk/",
       "reklamelink": "",
       "fakta": [
-        ["Pris", "Står ikke på forsiden."],
-        ["Levering", "Gratis for abonnenter og ved køb over 950 kr., ellers 65 kr. Hele landet undtagen øer uden bro."],
-        ["Økologi", "Økologisk"]
+        [
+          "Pris",
+          "Står ikke på forsiden."
+        ],
+        [
+          "Levering",
+          "Gratis for abonnenter og ved køb over 950 kr., ellers 65 kr. Hele landet undtagen øer uden bro."
+        ],
+        [
+          "Økologi",
+          "Økologisk"
+        ]
       ],
       "kontrolleret": "2026-11-10"
     }
   ],
   "ikke_med": [
-    ["Skagenfood", "Vi har ikke fundet en kasse fra Skagenfood helt uden kød og fisk."],
-    ["Simple Feast", "Var den rene plantebaserede måltidskasse, men findes ikke længere."]
+    [
+      "Skagenfood",
+      "Vi har ikke fundet en kasse fra Skagenfood helt uden kød og fisk."
+    ],
+    [
+      "Simple Feast",
+      "Var den rene plantebaserede måltidskasse, men findes ikke længere."
+    ]
   ],
   "opdateringer": [
-    ["2026-11-10", "Første udgave. Priserne for 2 og 4 personer med 3 retter om ugen er aflæst hos Aarstiderne og HelloFresh. Vi kunne ikke se RetNemts priser."]
+    [
+      "2026-11-10",
+      "Første udgave. Priserne for 2 og 4 personer med 3 retter om ugen er aflæst hos Aarstiderne og HelloFresh. Vi kunne ikke se RetNemts priser."
+    ],
+    [
+      "2026-11-12",
+      "RetNemts priser for 2 og 4 personer med 3 retter om ugen er tilføjet."
+    ]
   ]
 }

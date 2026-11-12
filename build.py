@@ -47,6 +47,21 @@ def dansk_dato(iso):
     return f"{d.day}. {MAANEDER[d.month - 1]} {d.year}"
 
 
+def kontrol_periode(datoer):
+    """Fx "10. november 2026" eller "mellem 10. og 12. november 2026"."""
+    aeldste, nyeste = min(datoer), max(datoer)
+    if aeldste == nyeste:
+        return dansk_dato(aeldste)
+    a, n = date.fromisoformat(aeldste), date.fromisoformat(nyeste)
+    if (a.year, a.month) == (n.year, n.month):
+        return f"mellem {a.day}. og {dansk_dato(nyeste)}"
+    return f"mellem {dansk_dato(aeldste)} og {dansk_dato(nyeste)}"
+
+
+def alle_kontroldatoer(beregninger):
+    return [b["kontrolleret"] for pr in beregninger.values() for b in pr.values() if b.get("kontrolleret")]
+
+
 def hele_kroner(beloeb):
     return int(Decimal(str(beloeb)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
@@ -350,7 +365,7 @@ def kategoriside(data, beregninger, opdateret):
     kat = data["kategori"]
     planer = kat["planer"]
     udbydere = data["udbydere"]
-    dato = dansk_dato(opdateret)
+    dato = kontrol_periode(alle_kontroldatoer(beregninger))
 
     plan_valg = "\n".join(
         f'<input type="radio" name="plan" id="plan-{p["id"]}" value="{p["id"]}"'
@@ -490,7 +505,7 @@ def forside(data, beregninger, opdateret):
             continue
         menu.append(f'<li><span class="navn">{e(u["navn"])}</span><span class="prikker" aria-hidden="true"></span>'
                     f'<span class="pris">{kr(b["pr_portion"])}</span></li>')
-    note = f"Priserne er kontrolleret {dansk_dato(opdateret)}."
+    note = f"Priserne er kontrolleret {kontrol_periode(alle_kontroldatoer(beregninger))}."
     if ukendte:
         note = f"Vi kunne ikke se prisen hos {oprems(ukendte)}. " + note
     indhold = f"""<section class="intro forside-intro">
