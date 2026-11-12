@@ -525,6 +525,16 @@ p {
   padding: 0.5rem 0 0;
 }
 
+.faerdig + .faerdig {
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--mint-linje);
+}
+
+.faerdig .loesning {
+  margin-bottom: 0.75rem;
+}
+
 .faerdig .fakta {
   margin-bottom: 0.25rem;
 }

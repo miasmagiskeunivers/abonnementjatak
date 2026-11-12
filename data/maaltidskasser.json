@@ -132,6 +132,44 @@
         ]
       ],
       "kontrolleret": "2026-11-10"
+    },
+    {
+      "id": "factor",
+      "navn": "Factor",
+      "loesning": "Vegetariske færdigretter efter eget valg",
+      "beskrivelse": "Færdigretter, der skal varmes i få minutter. Hvert måltid er til én person, og man vælger selv retterne fra en menu med 27 retter om ugen.",
+      "link": "https://www.factormeals.dk/",
+      "reklamelink": "",
+      "intro": {
+        "type": "procent_pr_levering",
+        "procenter": [
+          30,
+          20,
+          20,
+          20,
+          20
+        ],
+        "kontrolleret": "2026-11-12"
+      },
+      "fakta": [
+        [
+          "Vegetarisk",
+          "På menuen for 14.–20. november var 5 af de 27 retter vegetariske. En kasse med op til 5 måltider kan altså være helt uden kød og fisk."
+        ],
+        [
+          "Pris",
+          "440 kr. for 4 måltider og 520 kr. for 5 måltider om ugen. Det er 110 og 104 kr. pr. måltid."
+        ],
+        [
+          "Levering",
+          "49 kr. pr. levering."
+        ],
+        [
+          "Binding",
+          "Ingen binding. Du kan springe en uge over eller opsige, når du vil."
+        ]
+      ],
+      "kontrolleret": "2026-11-12"
     }
   ],
   "ikke_med": [
@@ -152,6 +190,10 @@
     [
       "2026-11-12",
       "RetNemts priser for 2 og 4 personer med 3 retter om ugen er tilføjet."
+    ],
+    [
+      "2026-11-12",
+      "Factor er tilføjet under færdigretter med priser for 4 og 5 måltider om ugen."
     ]
   ]
 }

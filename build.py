@@ -153,12 +153,24 @@ def sorteringsnoegle(u, b):
 # Tekster om tilbud
 
 def procent_raekke(intro):
-    dele = []
-    for i, procent in enumerate(intro["procenter"], start=1):
-        if i == 1:
-            dele.append(f"{procent} % rabat på første levering")
+    """Fx "25 % rabat på første levering, 15 % på anden og 10 % på tredje" eller
+    "30 % rabat på første levering og 20 % på de fire næste"."""
+    grupper = []
+    for procent in intro["procenter"]:
+        if grupper and grupper[-1][0] == procent:
+            grupper[-1][1] += 1
         else:
-            dele.append(f"{procent} % på {ORDENSTAL[i]}")
+            grupper.append([procent, 1])
+    dele = []
+    nummer = 1
+    for procent, antal in grupper:
+        if nummer == 1:
+            hvor = "første levering" if antal == 1 else f"de {TAL.get(antal, antal)} første leveringer"
+            dele.append(f"{procent} % rabat på {hvor}")
+        else:
+            hvor = ORDENSTAL[nummer] if antal == 1 else f"de {TAL.get(antal, antal)} næste"
+            dele.append(f"{procent} % på {hvor}")
+        nummer += antal
     return oprems(dele)
 
 
@@ -399,6 +411,7 @@ def kategoriside(data, beregninger, opdateret):
 <h3>{e(f["navn"])}</h3>
 <p class="loesning">{e(f["loesning"])}</p>
 <p>{e(f["beskrivelse"])}</p>
+{f'<p class="tilbud-boks">{e(tilbud_til_nye(f["intro"]))}</p>' if f.get("intro") else ""}
 <dl class="fakta">
 {fakta}
 </dl>
@@ -524,7 +537,7 @@ def forside(data, beregninger, opdateret):
 </div>
 </section>
 <div class="ramme">
-{tilbud_html(udbydere)}
+{tilbud_html(udbydere + data.get("faerdigretter", []))}
 <h2 id="saadan">Sådan regner vi</h2>
 <div class="principper">
 <div>
