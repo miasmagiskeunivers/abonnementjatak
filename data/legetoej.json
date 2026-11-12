@@ -1,0 +1,181 @@
+{
+  "kategori": {
+    "id": "legetoej",
+    "navn": "Legetøjsabonnementer",
+    "overskrift": "Legetøjs­abonnementer",
+    "menunavn": "Legetøj",
+    "sti": "legetoej/",
+    "datafil": "legetoej",
+    "lead": "Her er abonnementerne, hvor der kommer en kasse legetøj med posten. Vælg barnets alder, så viser vi prisen på første kasse, prisen pr. kasse og prisen pr. måned.",
+    "valg_spoergsmaal": "Hvor gammelt er barnet?",
+    "celler": ["foerste", "pr_kasse", "pr_maaned"],
+    "vilkaar_titel": "Binding og levering",
+    "metode_start": [
+      "Prisen kan ændre sig, når barnet bliver ældre. Derfor viser vi den for hver aldersgruppe, og en udbyder er kun med i de grupper, kasserne passer til."
+    ],
+    "forside_titel": "Legetøj til børn under 1 år",
+    "kurs_eur": 7.46038,
+    "kurs_kilde": "https://www.nationalbanken.dk/valutakurser",
+    "planer": [
+      {
+        "id": "under-1",
+        "navn": "Under 1 år",
+        "tekst": "Børn under 1 år"
+      },
+      {
+        "id": "1-2",
+        "navn": "1–2 år",
+        "tekst": "Børn på 1 og 2 år"
+      },
+      {
+        "id": "3-5",
+        "navn": "3–5 år",
+        "tekst": "Børn på 3 til 5 år"
+      }
+    ]
+  },
+  "udbydere": [
+    {
+      "id": "lovevery",
+      "navn": "Lovevery",
+      "loesning": "The Play Kits",
+      "alder": "fra fødslen til 5 år",
+      "legetoej": "beholdes",
+      "beskrivelse": "En kasse med legetøj og en lille guide til forældrene, som passer til barnets alder. Det første år kommer kassen hver anden måned, og derefter kommer den hver tredje måned.",
+      "link": "https://lovevery.eu/products/the-play-kits",
+      "reklamelink": "",
+      "valuta": "EUR",
+      "priser": {
+        "under-1": {
+          "kasse": 88,
+          "fragt": 7.9,
+          "fragt_foerste": 10,
+          "hver": 2,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://lovevery.eu/products/the-play-kits"
+        },
+        "1-2": {
+          "kasse": 132,
+          "fragt": 7.9,
+          "fragt_foerste": 10,
+          "hver": 3,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://lovevery.eu/products/the-play-kits"
+        },
+        "3-5": {
+          "kasse": 132,
+          "fragt": 7.9,
+          "fragt_foerste": 10,
+          "hver": 3,
+          "note": "Kasserne til 4-årige findes kun på engelsk.",
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://lovevery.eu/products/the-play-kits"
+        }
+      },
+      "intro": null,
+      "andet_tilbud": "Betaler I for tre kasser ad gangen, koster hver kasse 80 € under 1 år og 120 € fra 1 år.",
+      "binding": "Ingen binding. Du kan springe en kasse over eller opsige når som helst, senest 3 dage før næste betaling.",
+      "levering": "10 € for første kasse og 7,90 € for de næste. Kassen sendes fra Tyskland eller Storbritannien og er 5 til 7 dage undervejs."
+    },
+    {
+      "id": "littleunbox",
+      "navn": "LittleUnBox",
+      "loesning": "Babyboks og aktivitetsboks",
+      "alder": "fra fødslen til ca. 5 år",
+      "legetoej": "beholdes",
+      "beskrivelse": "En kasse hver måned, som passer til barnets alder. Til de mindste er der legetøj og øvelser, og fra 20 måneder bliver det til en aktivitetsboks med krea, natur og eventyr.",
+      "link": "https://littleunbox.dk/products/littleunbox-abonn",
+      "reklamelink": "",
+      "valuta": "DKK",
+      "priser": {
+        "under-1": {
+          "kasse": 198,
+          "fragt": 38,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://littleunbox.dk/products/littleunbox-abonn"
+        },
+        "1-2": {
+          "kasse": 198,
+          "fragt": 38,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://littleunbox.dk/products/littleunbox-abonn"
+        },
+        "3-5": {
+          "kasse": 198,
+          "fragt": 38,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://littleunbox.dk/products/littleunbox-abonn"
+        }
+      },
+      "intro": {
+        "type": "foerste_kasse",
+        "pris": 149,
+        "kontrolleret": "2026-11-12"
+      },
+      "andet_tilbud": "",
+      "binding": "Ingen binding.",
+      "levering": "38 kr. pr. kasse. Første kasse kommer inden for 2 til 7 hverdage."
+    },
+    {
+      "id": "dearbaby",
+      "navn": "DearBaby",
+      "loesning": "Legetøjskasser til leje",
+      "alder": "fra 2 måneder til 3 år",
+      "legetoej": "lejes",
+      "beskrivelse": "En kasse med 4 til 5 stykker legetøj hver måned, som passer til barnets alder. Kassen byttes i en pakkeshop, og vil I beholde noget, kan I købe det til nedsat pris.",
+      "link": "https://dearbaby.dk/vare/dearbaby-tilmeld-dig-legetoejskasser/",
+      "reklamelink": "",
+      "valuta": "DKK",
+      "fragt_tekst": "levering og returnering er med i prisen",
+      "priser": {
+        "under-1": {
+          "kasse": 369,
+          "fragt": 0,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://dearbaby.dk/vare/dearbaby-tilmeld-dig-legetoejskasser/"
+        },
+        "1-2": {
+          "kasse": 369,
+          "fragt": 0,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://dearbaby.dk/vare/dearbaby-tilmeld-dig-legetoejskasser/"
+        }
+      },
+      "intro": {
+        "type": "maaneder_til_pris",
+        "pris": 339,
+        "maaneder": 2,
+        "note": "Rabatkoden står hos DearBaby.",
+        "kontrolleret": "2026-11-12"
+      },
+      "andet_tilbud": "",
+      "binding": "Ingen binding. Du kan opsige, når du vil.",
+      "levering": "Levering og returnering er med i prisen. Du bytter kassen i en pakkeshop, når barnet bliver en måned ældre."
+    }
+  ],
+  "ikke_med": [
+    [
+      "Sculpto Boxes",
+      "Sender et byggeprojekt hver måned til børn på 8 til 12 år, men abonnementet er udsolgt lige nu."
+    ],
+    [
+      "Goodevas",
+      "Abonnementet er udsolgt, og resten er enkeltkasser med priser i dollar."
+    ],
+    [
+      "Lalatoys",
+      "Lejede legetøj ud, men vi kan ikke finde tjenesten længere."
+    ]
+  ],
+  "opdateringer": [
+    [
+      "2026-11-12",
+      "Første udgave med Lovevery, LittleUnBox og DearBaby. Priserne er aflæst hos udbyderne, og Loveverys fragt til Danmark er aflæst i bestillingen."
+    ]
+  ]
+}

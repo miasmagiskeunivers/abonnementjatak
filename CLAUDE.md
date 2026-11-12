@@ -1,6 +1,6 @@
 # Abonnement, ja tak
 
-Instruktioner til Claude, der arbejder på abonnementjatak.dk. Sitet sammenligner abonnementer på det, man bruger igen og igen. Første kategori er vegetariske måltidskasser. Mia ejer sitet og bestemmer. Claude bygger og vedligeholder det. Mia skal bruge så lidt tid som muligt på sitet, så løs selv det, der kan løses, og spørg kun om det, der kræver hendes beslutning.
+Instruktioner til Claude, der arbejder på abonnementjatak.dk. Sitet sammenligner abonnementer på det, man bruger igen og igen. Kategorierne er vegetariske måltidskasser, legetøjsabonnementer og hundekasser. Mia ejer sitet og bestemmer. Claude bygger og vedligeholder det. Mia skal bruge så lidt tid som muligt på sitet, så løs selv det, der kan løses, og spørg kun om det, der kræver hendes beslutning.
 
 ## Repoet er offentligt
 
@@ -14,13 +14,17 @@ Skriv aldrig provisioner, aftaler med netværk, interne noter, passwords, tokens
 
 ## Data og udregning
 
-- Alle tal står i `data/maaltidskasser.json`. `build.py` regner resten ud og skriver sitet i `docs/`. Ret aldrig direkte i `docs/`. Felterne er beskrevet i `README.md`.
+- Alle tal står i `data/maaltidskasser.json`, `data/legetoej.json` og `data/hundekasser.json`. `build.py` regner resten ud og skriver sitet i `docs/`. Ret aldrig direkte i `docs/`. Felterne er beskrevet i `README.md`.
 - Brug kun priser, du selv har set hos udbyderen. Skriv datoen i `kontrolleret` og siden i `kilde`.
 - Kan en pris ikke ses, så sæt `kasse` til `null`. Gæt ikke, og brug ikke tal fra andre sites.
 - Standardkasserne er til 2 og 4 personer med 3 retter om ugen. Alle priser er med levering.
 - Siden viser prisen på første levering, normalprisen pr. uge og prisen pr. portion. Vis ikke samlede beløb for flere uger.
 - Listen sorteres efter normalprisen. En aftale med en udbyder må aldrig ændre rækkefølgen.
 - En måltidskasse er kun med, hvis hele kassen kan være uden kød og fisk.
+- Legetøj sammenlignes for aldersgrupperne under 1 år, 1–2 år og 3–5 år. En udbyder er kun med i de grupper, kasserne passer til. Skriv barnets alder og om legetøjet lejes eller beholdes.
+- Hundekasser sammenlignes som en kasse om måneden uden binding og med den billigste levering.
+- Legetøj og hundekasser viser prisen på første kasse og prisen pr. måned, og legetøj viser også prisen pr. kasse. Listen sorteres efter prisen pr. måned.
+- Priser i euro står i euro i datafilen. `build.py` omregner dem med Nationalbankens centralkurs i `kurs_eur` og skriver ca. foran beløbet.
 - Skriv en linje under `opdateringer`, når priser, tilbud eller udbydere ændres.
 
 ## Tekst
@@ -40,10 +44,11 @@ Skriv aldrig provisioner, aftaler med netværk, interne noter, passwords, tokens
 
 1. Kør `python3 build.py`, og sammenlign tallene i terminalen med kilderne.
 2. Start en lokal server i `docs/` med `python3 -m http.server`, for skriften indlæses ikke fra `file://`.
-3. Se forsiden og kategorisiden i 390 og 1280 pixels bredde, og tjek, at valget mellem 2 og 4 personer virker.
+3. Se forsiden og kategorisiderne i 390 og 1280 pixels bredde, og tjek, at valgene på forsiden, mellem 2 og 4 personer og mellem aldersgrupperne virker.
 4. Commit både `data/` og `docs/`.
 
 ## Faste kontroller
 
 - Tilbud kontrolleres hver uge og priser hver måned.
-- Tjek samtidig, om en udbyder er lukket, eller om der er kommet nye vegetariske kasser. Foreslå nye udbydere til Mia, og tilføj dem først, når hun har sagt ja.
+- Tjek samtidig, om en udbyder er lukket, eller om der er kommet nye kasser i kategorierne. Foreslå nye udbydere til Mia, og tilføj dem først, når hun har sagt ja.
+- Abonnementerne hos Sculpto Boxes og Goodevas er udsolgt. Tjek, om de åbner igen, og spørg Mia, før de kommer med.

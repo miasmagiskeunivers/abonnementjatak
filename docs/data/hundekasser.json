@@ -1,0 +1,72 @@
+{
+  "navn": "Priser på hundekasser i Danmark",
+  "kilde": "https://abonnementjatak.dk/hundekasser/",
+  "opdateret": "2026-11-12",
+  "forklaring": {
+    "kassepris": "Kassens pris i udbyderens valuta, uden levering.",
+    "pris_pr_kasse_kr": "Kassen plus levering i kroner.",
+    "pris_pr_maaned_kr": "Prisen pr. kasse delt med antallet af måneder mellem kasserne.",
+    "foerste_kasse_kr": "Det, du betaler første gang, med introtilbud og fragt.",
+    "omregnet_fra_euro": "ja: beløbet er omregnet med 7.46038 kr. pr. euro.",
+    "status": "kendt: prisen kunne ses. ukendt: vi kunne ikke se prisen."
+  },
+  "priser": [
+    {
+      "id": "barko",
+      "udbyder": "Barko",
+      "loesning": "BuddyBox",
+      "plan": "En kasse om måneden",
+      "valuta": "DKK",
+      "kassepris": 289,
+      "levering": 49,
+      "maaneder_mellem_kasser": 1,
+      "foerste_kasse_kr": 338,
+      "pris_pr_kasse_kr": 338,
+      "pris_pr_maaned_kr": 338,
+      "omregnet_fra_euro": "",
+      "status": "kendt",
+      "introtilbud": "",
+      "kontrolleret": "2026-11-12",
+      "kilde": "https://www.barko.dk/buddybox/storrelse/mellem",
+      "link": "https://www.barko.dk/"
+    },
+    {
+      "id": "bullerbox",
+      "udbyder": "BullerBox",
+      "loesning": "Månedlig BullerBox",
+      "plan": "En kasse om måneden",
+      "valuta": "DKK",
+      "kassepris": 199,
+      "levering": 49,
+      "maaneder_mellem_kasser": 1,
+      "foerste_kasse_kr": 248,
+      "pris_pr_kasse_kr": 248,
+      "pris_pr_maaned_kr": 248,
+      "omregnet_fra_euro": "",
+      "status": "kendt",
+      "introtilbud": "",
+      "kontrolleret": "2026-11-12",
+      "kilde": "https://subscribe.bullerbox.dk/v1/subscribe/name",
+      "link": "https://bullerbox.dk/bullerbox/"
+    },
+    {
+      "id": "pawpack",
+      "udbyder": "PawPack",
+      "loesning": "Månedlig PawPack",
+      "plan": "En kasse om måneden",
+      "valuta": "DKK",
+      "kassepris": 249,
+      "levering": 0,
+      "maaneder_mellem_kasser": 1,
+      "foerste_kasse_kr": 249,
+      "pris_pr_kasse_kr": 249,
+      "pris_pr_maaned_kr": 249,
+      "omregnet_fra_euro": "",
+      "status": "kendt",
+      "introtilbud": "",
+      "kontrolleret": "2026-11-12",
+      "kilde": "https://www.pawpack.dk/collections/all",
+      "link": "https://www.pawpack.dk/"
+    }
+  ]
+}

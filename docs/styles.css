@@ -163,7 +163,8 @@ p {
 
 .top nav {
   display: flex;
-  gap: 0 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.15rem 1.25rem;
   font-size: 0.975rem;
   font-weight: 600;
 }
@@ -354,6 +355,18 @@ p {
   font-size: 0.9375rem;
 }
 
+/* Alder, indhold og om man beholder legetøjet står lige under navnet. */
+.undertekst {
+  margin: 0.5rem 0 0;
+  font-size: 0.96875rem;
+}
+
+.liste-note {
+  margin: 1rem 0 0;
+  color: var(--groen-svag);
+  font-size: 0.9375rem;
+}
+
 .priser {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -374,6 +387,10 @@ p {
 
 .priser > div:first-child {
   border-left: 0;
+}
+
+.priser-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .priser > .valgt {
@@ -502,6 +519,16 @@ p {
   list-style: none;
 }
 
+.tilbud-gruppe {
+  margin: 1.5rem 0 0.4rem;
+  font-size: 1.25rem;
+}
+
+.tilbud-gruppe a {
+  color: inherit;
+  text-decoration-color: var(--rosa-linje);
+}
+
 .tilbud-liste li {
   padding: 0.85rem 0;
   border-top: 1px solid var(--rosa-linje);
@@ -573,12 +600,39 @@ p {
   font-size: clamp(2.375rem, 1.5rem + 4vw, 3.75rem);
 }
 
-.smagsproeve {
+/* Eksemplerne på forsiden. Uden :has() står de under hinanden, og valget er skjult. */
+.smagsproever {
   max-width: 30rem;
-  margin-top: 2.5rem;
+  margin-top: 2.25rem;
+}
+
+.forside-valg {
+  display: none;
+}
+
+.smagsproeve {
   padding: 1.35rem 1.4rem 1.1rem;
   border-radius: 1.25rem;
   background: var(--hvid);
+}
+
+.smagsproeve + .smagsproeve {
+  margin-top: 1rem;
+}
+
+@supports selector(:has(a)) {
+  .forside-valg {
+    display: block;
+    margin-bottom: 0.9rem;
+  }
+
+  .smagsproeve[data-vis] {
+    display: none;
+  }
+
+  .smagsproeve + .smagsproeve {
+    margin-top: 0;
+  }
 }
 
 .smagsproeve h2 {

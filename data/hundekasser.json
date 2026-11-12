@@ -1,0 +1,112 @@
+{
+  "kategori": {
+    "id": "hundekasser",
+    "navn": "Hundekasser",
+    "menunavn": "Hundekasser",
+    "sti": "hundekasser/",
+    "datafil": "hundekasser",
+    "lead": "Her er kasserne med legetøj og godbidder, som kommer med posten hver måned. Vi viser prisen med levering, når man ikke binder sig.",
+    "valg_spoergsmaal": "",
+    "celler": ["foerste", "pr_maaned"],
+    "vilkaar_titel": "Binding, levering og størrelse",
+    "metode_start": [
+      "Vi sammenligner en kasse om måneden uden binding og med den billigste levering. Hos alle udbyderne koster kassen det samme, uanset hvor stor hunden er."
+    ],
+    "forside_titel": "Kasse til hunden hver måned",
+    "kurs_eur": 7.46038,
+    "kurs_kilde": "https://www.nationalbanken.dk/valutakurser",
+    "planer": [
+      {
+        "id": "maaned",
+        "navn": "En kasse om måneden",
+        "tekst": "En kasse om måneden uden binding"
+      }
+    ]
+  },
+  "udbydere": [
+    {
+      "id": "bullerbox",
+      "navn": "BullerBox",
+      "loesning": "Månedlig BullerBox",
+      "undertekst": "2 stykker legetøj og 3 poser godbidder hver måned.",
+      "beskrivelse": "Indholdet passer til hundens størrelse, og godbidderne er uden korn og gluten. Kan hunden ikke lide noget, sender BullerBox noget andet i stedet.",
+      "link": "https://bullerbox.dk/bullerbox/",
+      "reklamelink": "",
+      "valuta": "DKK",
+      "priser": {
+        "maaned": {
+          "kasse": 199,
+          "fragt": 49,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://subscribe.bullerbox.dk/v1/subscribe/name"
+        }
+      },
+      "intro": null,
+      "andet_tilbud": "",
+      "binding": "Ingen binding. Du kan holde pause eller opsige på Min side senest den 15. i måneden.",
+      "levering": "49 kr. pr. kasse. Første kasse sendes i måneden efter tilmeldingen.",
+      "stoerrelse": "Samme pris for små, mellemstore og store hunde."
+    },
+    {
+      "id": "barko",
+      "navn": "Barko",
+      "loesning": "BuddyBox",
+      "undertekst": "4 til 7 ting med legetøj, godbidder og pleje hver måned.",
+      "beskrivelse": "Kassen passer til hundens størrelse. Tåler hunden ikke fx kylling eller fisk, kan man skrive det, når man bestiller.",
+      "link": "https://www.barko.dk/",
+      "reklamelink": "",
+      "valuta": "DKK",
+      "priser": {
+        "maaned": {
+          "kasse": 289,
+          "fragt": 49,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://www.barko.dk/buddybox/storrelse/mellem"
+        }
+      },
+      "intro": null,
+      "andet_tilbud": "Binder du dig i 3 måneder, koster kassen 239 kr. plus fragt. Binder du dig i 6 måneder, koster den 199 kr. plus fragt.",
+      "binding": "Ingen binding på den månedlige plan. Vælger du 3 eller 6 måneder, kan du ikke opsige i den periode. Ændringer skal ske senest den 20. i måneden.",
+      "levering": "49 kr. pr. kasse til en GLS-pakkeshop. Levering til døren koster 19 kr. mere.",
+      "stoerrelse": "Samme pris for små, mellemstore og store hunde."
+    },
+    {
+      "id": "pawpack",
+      "navn": "PawPack",
+      "loesning": "Månedlig PawPack",
+      "undertekst": "Godbidder, legetøj og en overraskelse hver måned.",
+      "beskrivelse": "Kassen passer til hundens størrelse, og man kan skrive, hvis hunden har allergier. Godbidderne er uden korn og gluten.",
+      "link": "https://www.pawpack.dk/",
+      "reklamelink": "",
+      "valuta": "DKK",
+      "priser": {
+        "maaned": {
+          "kasse": 249,
+          "fragt": 0,
+          "hver": 1,
+          "kontrolleret": "2026-11-12",
+          "kilde": "https://www.pawpack.dk/collections/all"
+        }
+      },
+      "intro": null,
+      "andet_tilbud": "",
+      "binding": "Ingen binding. Du kan holde pause eller opsige senest den 15. i måneden.",
+      "levering": "Gratis levering, også til døren.",
+      "stoerrelse": "Samme pris for små, mellemstore og store hunde."
+    }
+  ],
+  "ikke_med": [
+    [
+      "HundeBoxen",
+      "Webshoppen er ikke tilgængelig."
+    ]
+  ],
+  "opdateringer": [
+    [
+      "2026-11-12",
+      "Første udgave med BullerBox, Barko og PawPack. Priserne er for en kasse om måneden uden binding."
+    ]
+  ]
+}

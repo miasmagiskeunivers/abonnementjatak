@@ -1,13 +1,19 @@
 # Abonnement, ja tak
 
-> Dansk oversigt over abonnementer på det, man bruger igen og igen. Første kategori er vegetariske måltidskasser fra Aarstiderne, HelloFresh og RetNemt. For 2 og 4 personer med 3 retter om ugen viser sitet prisen på første levering, normalprisen pr. uge og prisen pr. portion, alle med levering. Priserne er aflæst hos udbyderne, senest 12. november 2026. Hvor en pris ikke kunne ses, står der det.
+> Dansk oversigt over abonnementer på det, man bruger igen og igen. Vegetariske måltidskasser fra Aarstiderne, HelloFresh og RetNemt. For 2 og 4 personer med 3 retter om ugen viser sitet prisen på første levering, normalprisen pr. uge og prisen pr. portion, alle med levering. Legetøjsabonnementer fra DearBaby, LittleUnBox og Lovevery. Sitet viser prisen på første kasse og prisen pr. måned med levering for børn under 1 år, børn på 1 og 2 år og børn på 3 til 5 år. Hundekasser fra Barko, BullerBox og PawPack. Sitet viser prisen på første kasse og prisen pr. måned med levering for en kasse om måneden uden binding. Priserne er aflæst hos udbyderne, senest 12. november 2026. Hvor en pris ikke kunne ses, står der det.
 
 ## Sider
 
 - [Vegetariske måltidskasser](https://abonnementjatak.dk/vegetariske-maaltidskasser/): sammenligning af priser, introtilbud, binding og levering
+- [Legetøjsabonnementer](https://abonnementjatak.dk/legetoej/): sammenligning af priser, tilbud, binding og levering
+- [Hundekasser](https://abonnementjatak.dk/hundekasser/): sammenligning af priser, tilbud, binding og levering
 - [Om sitet](https://abonnementjatak.dk/om/): hvem står bag, hvordan tallene findes, og hvordan sitet tjener penge
 
 ## Data
 
-- [Priser som CSV](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.csv)
-- [Priser som JSON](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.json)
+- [Vegetariske måltidskasser som CSV](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.csv)
+- [Vegetariske måltidskasser som JSON](https://abonnementjatak.dk/data/vegetariske-maaltidskasser.json)
+- [Legetøjsabonnementer som CSV](https://abonnementjatak.dk/data/legetoej.csv)
+- [Legetøjsabonnementer som JSON](https://abonnementjatak.dk/data/legetoej.json)
+- [Hundekasser som CSV](https://abonnementjatak.dk/data/hundekasser.csv)
+- [Hundekasser som JSON](https://abonnementjatak.dk/data/hundekasser.json)

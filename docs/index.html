@@ -5,18 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Abonnement, ja tak | Abonnementer på det, du bruger igen og igen</title>
-<meta name="description" content="Vi sammenligner abonnementer på måltidskasser og andet, der kommer af sig selv, og viser, hvad de koster med levering.">
+<meta name="description" content="Vi sammenligner abonnementer på vegetariske måltidskasser, legetøj og hundekasser og viser, hvad de koster med levering.">
 <link rel="canonical" href="https://abonnementjatak.dk/">
 <meta property="og:url" content="https://abonnementjatak.dk/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="da_DK">
 <meta property="og:site_name" content="Abonnement, ja tak">
 <meta property="og:title" content="Abonnement, ja tak | Abonnementer på det, du bruger igen og igen">
-<meta property="og:description" content="Vi sammenligner abonnementer på måltidskasser og andet, der kommer af sig selv, og viser, hvad de koster med levering.">
+<meta property="og:description" content="Vi sammenligner abonnementer på vegetariske måltidskasser, legetøj og hundekasser og viser, hvad de koster med levering.">
 <meta name="theme-color" content="#e6f2eb">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/ajt-serif.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="styles.css">
+<style>
+@supports selector(:has(a)) {
+.smagsproever:has(#eksempel-valg-mad:checked) [data-vis="mad"],
+.smagsproever:has(#eksempel-valg-legetoej:checked) [data-vis="legetoej"],
+.smagsproever:has(#eksempel-valg-hundekasser:checked) [data-vis="hundekasser"] {
+  display: block;
+}
+}
+</style>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -46,17 +55,25 @@
 <header class="top-baand">
 <div class="ramme top">
 <a class="maerke" href="./"><img src="logo.svg" width="564" height="83" alt="Abonnement, ja tak, forsiden"></a>
-<nav aria-label="Hovedmenu"><a href="vegetariske-maaltidskasser/">Måltidskasser</a><a href="om/">Om sitet</a></nav>
+<nav aria-label="Hovedmenu"><a href="vegetariske-maaltidskasser/">Måltidskasser</a><a href="legetoej/">Legetøj</a><a href="hundekasser/">Hundekasser</a><a href="om/">Om sitet</a></nav>
 </div>
 </header>
 <main id="indhold">
 <section class="intro forside-intro">
 <div class="ramme">
 <h1>Abonnementer på det, du bruger igen og igen</h1>
-<p class="lead">Vi sammenligner abonnementer på ting, der kommer af sig selv, og viser, hvad de koster med levering. Vi er startet med vegetariske måltidskasser.</p>
-<p><a class="knap" href="vegetariske-maaltidskasser/">Se de vegetariske måltidskasser</a></p>
-<section class="smagsproeve" aria-labelledby="eksempel">
-<h2 id="eksempel">Vegetarisk måltidskasse til 2 personer</h2>
+<p class="lead">Vi sammenligner abonnementer på ting, der kommer af sig selv, og viser, hvad de koster med levering. Lige nu kan du sammenligne vegetariske måltidskasser, legetøj og hundekasser.</p>
+<div class="smagsproever">
+<fieldset class="segment forside-valg">
+<legend>Se et eksempel</legend>
+<div class="segment-valg">
+<input type="radio" name="eksempel" id="eksempel-valg-mad" checked><label for="eksempel-valg-mad">Måltidskasser</label>
+<input type="radio" name="eksempel" id="eksempel-valg-legetoej"><label for="eksempel-valg-legetoej">Legetøj</label>
+<input type="radio" name="eksempel" id="eksempel-valg-hundekasser"><label for="eksempel-valg-hundekasser">Hundekasser</label>
+</div>
+</fieldset>
+<section class="smagsproeve" data-vis="mad" aria-labelledby="eksempel-mad">
+<h2 id="eksempel-mad">Vegetarisk måltidskasse til 2 personer</h2>
 <p class="smagsproeve-under">Pris pr. portion med levering, når I får 3 retter om ugen.</p>
 <ol class="menukort">
 <li><span class="navn">Aarstiderne</span><span class="prikker" aria-hidden="true"></span><span class="pris">80 kr.</span></li>
@@ -65,24 +82,56 @@
 </ol>
 <p class="smagsproeve-note">Priserne er kontrolleret mellem 10. og 12. november 2026. <a href="vegetariske-maaltidskasser/">Se hele sammenligningen</a></p>
 </section>
+<section class="smagsproeve" data-vis="legetoej" aria-labelledby="eksempel-legetoej">
+<h2 id="eksempel-legetoej">Legetøj til børn under 1 år</h2>
+<p class="smagsproeve-under">Pris pr. måned med levering.</p>
+<ol class="menukort">
+<li><span class="navn">LittleUnBox</span><span class="prikker" aria-hidden="true"></span><span class="pris">236 kr.</span></li>
+<li><span class="navn">Lovevery</span><span class="prikker" aria-hidden="true"></span><span class="pris"><span class="forbehold-lille">ca.</span> 358 kr.</span></li>
+<li><span class="navn">DearBaby</span><span class="prikker" aria-hidden="true"></span><span class="pris">369 kr.</span></li>
+</ol>
+<p class="smagsproeve-note">Priserne er kontrolleret 12. november 2026. <a href="legetoej/">Se hele sammenligningen</a></p>
+</section>
+<section class="smagsproeve" data-vis="hundekasser" aria-labelledby="eksempel-hundekasser">
+<h2 id="eksempel-hundekasser">Kasse til hunden hver måned</h2>
+<p class="smagsproeve-under">Pris pr. måned med levering. En kasse om måneden uden binding.</p>
+<ol class="menukort">
+<li><span class="navn">BullerBox</span><span class="prikker" aria-hidden="true"></span><span class="pris">248 kr.</span></li>
+<li><span class="navn">PawPack</span><span class="prikker" aria-hidden="true"></span><span class="pris">249 kr.</span></li>
+<li><span class="navn">Barko</span><span class="prikker" aria-hidden="true"></span><span class="pris">338 kr.</span></li>
+</ol>
+<p class="smagsproeve-note">Priserne er kontrolleret 12. november 2026. <a href="hundekasser/">Se hele sammenligningen</a></p>
+</section>
+</div>
 </div>
 </section>
 <div class="ramme">
 <section class="tilbud" aria-labelledby="tilbud">
 <h2 id="tilbud">Tilbud lige nu</h2>
 <p class="tilbud-intro">Tilbuddene kan ændre sig fra uge til uge. Vi har tjekket dem 12. november 2026.</p>
+<h3 class="tilbud-gruppe"><a href="vegetariske-maaltidskasser/">Måltidskasser</a></h3>
 <ul class="tilbud-liste">
 <li><span class="tilbud-navn">Aarstiderne</span> Med medlemskabet Aarstiderne Plus er kassen 10 % billigere, og levering er gratis. Medlemskabet kan tidligst opsiges efter 6 måneder.</li>
 <li><span class="tilbud-navn">Factor</span> 30 % rabat på første levering og 20 % på de fire næste. <span class="tilbud-note">Gælder nye kunder.</span></li>
 <li><span class="tilbud-navn">HelloFresh</span> Spar op til 959 kr. på de fem første kasser. <span class="tilbud-note">Gælder nye kunder.</span></li>
 <li><span class="tilbud-navn">RetNemt</span> 25 % rabat på første levering, 15 % på anden og 10 % på tredje. <span class="tilbud-note">Gælder nye kunder.</span></li>
 </ul>
+<h3 class="tilbud-gruppe"><a href="legetoej/">Legetøj</a></h3>
+<ul class="tilbud-liste">
+<li><span class="tilbud-navn">DearBaby</span> De to første måneder koster 339 kr. om måneden. <span class="tilbud-note">Gælder nye kunder.</span></li>
+<li><span class="tilbud-navn">LittleUnBox</span> Første kasse koster 149 kr. med fragt. <span class="tilbud-note">Gælder nye kunder.</span></li>
+<li><span class="tilbud-navn">Lovevery</span> Betaler I for tre kasser ad gangen, koster hver kasse 80 € under 1 år og 120 € fra 1 år.</li>
+</ul>
+<h3 class="tilbud-gruppe"><a href="hundekasser/">Hundekasser</a></h3>
+<ul class="tilbud-liste">
+<li><span class="tilbud-navn">Barko</span> Binder du dig i 3 måneder, koster kassen 239 kr. plus fragt. Binder du dig i 6 måneder, koster den 199 kr. plus fragt.</li>
+</ul>
 </section>
 <h2 id="saadan">Sådan regner vi</h2>
 <div class="principper">
 <div>
 <h3>Vi regner levering med</h3>
-<p>Prisen pr. uge og pr. portion er med levering, så du kan sammenligne kasserne direkte.</p>
+<p>Alle priser er med levering, så du kan sammenligne direkte.</p>
 </div>
 <div>
 <h3>Vi skriver kun priser, vi selv har set</h3>
